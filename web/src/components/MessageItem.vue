@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ChatMessage } from '../types'
+import MarkdownRenderer from './MarkdownRenderer.vue'
 
 const props = defineProps<{
   message: ChatMessage
@@ -26,7 +27,9 @@ const time = computed(() => {
       <span class="role">{{ label }}</span>
       <span class="time">{{ time }}</span>
     </div>
-    <div class="content">{{ message.content }}</div>
+
+    <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
+    <div v-else class="content">{{ message.content }}</div>
   </div>
 </template>
 
