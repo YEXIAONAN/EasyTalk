@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
 	"easytalk/internal/config"
+	"easytalk/internal/provider"
 )
 
 // maskKey hides all but the last few characters of an API key so it can be
@@ -133,4 +135,38 @@ func (s *Server) handleDeleteProvider(w http.ResponseWriter, r *http.Request) {
 // saveLocked persists the current config. The caller must hold s.mu.
 func (s *Server) saveLocked() error {
 	return config.Save(s.configPath, s.cfg)
+}
+
+// findProvider returns the provider with the given name (with its real API
+// key), if it exists.
+func (s *Server) findProvider(name string) (config.Provider, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, p := range s.cfg.Providers {
+		if p.Name == name {
+			return p, true
+		}
+	}
+	return config.Provider{}, false
+}
+
+func (s *Server) handleTestProvider(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+
+	p, ok := s.findProvider(name)
+	if !ok {
+		writeError(w, http.StatusNotFound, "provider not found")
+		return
+	}
+
+	if err := provider.Test(p.BaseURL, p.APIKey); err != nil {
+		status := http.StatusBadGateway
+		if errors.Is(err, provider.ErrInvalidKey) {
+			status = http.StatusUnauthorized
+		}
+		writeError(w, status, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

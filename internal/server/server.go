@@ -45,6 +45,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/providers", s.handleCreateProvider)
 	s.mux.HandleFunc("PUT /api/providers/{name}", s.handleUpdateProvider)
 	s.mux.HandleFunc("DELETE /api/providers/{name}", s.handleDeleteProvider)
+	s.mux.HandleFunc("POST /api/providers/{name}/test", s.handleTestProvider)
 
 	if s.static != nil {
 		fileServer := http.FileServerFS(s.static)
