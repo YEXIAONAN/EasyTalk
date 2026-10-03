@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import type { ChatMessage, Provider } from '../types'
+import { BRANDING } from '../config/branding'
 import ChatHeader from './ChatHeader.vue'
 import MessageItem from './MessageItem.vue'
 import Composer from './Composer.vue'
@@ -49,9 +50,9 @@ watch(
 
     <div ref="listEl" class="messages">
       <div v-if="messages.length === 0" class="empty">
-        <div class="empty-mark">ET</div>
+        <img class="empty-mark" :src="BRANDING.logoMark" alt="EasyTalk" />
         <h2>开始新的对话</h2>
-        <p>配置 Provider 并选择模型后，在下方输入内容开始对话。</p>
+        <p>选择一个 Provider 和 Model，在下方输入内容开始对话。</p>
       </div>
 
       <div v-else class="list">
@@ -93,17 +94,10 @@ watch(
 }
 
 .empty-mark {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 12px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 16px;
-  font-weight: 700;
 }
 
 .empty h2 {
