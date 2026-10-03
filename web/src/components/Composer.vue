@@ -39,19 +39,6 @@ function autoResize() {
 <template>
   <footer class="composer">
     <div class="box">
-      <button class="icon-btn" title="附件">
-        <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
-          <path
-            d="M8 11.5V4.5M5.5 7l2.5-2.5L10.5 7"
-            stroke="currentColor"
-            stroke-width="1.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path d="M3.5 12.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-        </svg>
-      </button>
-
       <textarea
         ref="el"
         v-model="text"

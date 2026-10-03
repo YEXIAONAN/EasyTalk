@@ -5,15 +5,16 @@ import ChatView from './components/ChatView.vue'
 import SettingsView from './views/SettingsView.vue'
 import AboutView from './views/AboutView.vue'
 import { useProviders } from './composables/useProviders'
+import { useChat } from './composables/useChat'
 
 type View = 'chat' | 'settings' | 'about'
 
 const currentView = ref<View>('chat')
 
 const { providers, fetchProviders } = useProviders()
+const { messages, sending, send } = useChat()
 const provider = ref('')
 const model = ref('')
-const sending = ref(false)
 
 onMounted(fetchProviders)
 
@@ -37,6 +38,10 @@ watch(provider, (name) => {
   const current = providers.value.find((p) => p.name === name)
   model.value = current?.models[0] ?? ''
 })
+
+function onSend(content: string) {
+  send(provider.value, model.value, content)
+}
 </script>
 
 <template>
@@ -49,7 +54,9 @@ watch(provider, (name) => {
         v-model:provider="provider"
         v-model:model="model"
         :providers="providers"
+        :messages="messages"
         :sending="sending"
+        @send="onSend"
         @settings="currentView = 'settings'"
       />
       <SettingsView v-else-if="currentView === 'settings'" />

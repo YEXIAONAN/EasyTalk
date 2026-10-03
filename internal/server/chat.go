@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"easytalk/internal/provider"
@@ -70,10 +69,30 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, baseURL, api
 	w.Header().Set("Connection", "keep-alive")
 	w.WriteHeader(http.StatusOK)
 
-	if flusher, ok := w.(http.Flusher); ok {
-		flusher.Flush()
+	flusher, _ := w.(http.Flusher)
+	buf := make([]byte, 4096)
+
+	for {
+		// Abort forwarding as soon as the client disconnects.
+		select {
+		case <-r.Context().Done():
+			return
+		default:
+		}
+
+		n, readErr := upstream.Body.Read(buf)
+		if n > 0 {
+			if _, err := w.Write(buf[:n]); err != nil {
+				return
+			}
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+		if readErr != nil {
+			return
+		}
 	}
-	_, _ = io.Copy(w, upstream.Body)
 }
 
 func (s *Server) writeChatError(w http.ResponseWriter, err error) {
