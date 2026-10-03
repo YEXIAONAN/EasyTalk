@@ -1,11 +1,19 @@
-import { ref } from 'vue'
-import type { ChatMessage } from '../types'
+import { computed, ref } from 'vue'
+import type { ChatMessage, Conversation } from '../types'
 import { sendChat, friendlyChatError } from '../services/chat'
+import * as db from '../services/db'
 
-const messages = ref<ChatMessage[]>([])
+const conversations = ref<Conversation[]>([])
+const activeId = ref<string | null>(null)
 const sending = ref(false)
 
 let controller: AbortController | null = null
+
+const activeConversation = computed(
+  () => conversations.value.find((c) => c.id === activeId.value) ?? null,
+)
+
+const messages = computed<ChatMessage[]>(() => activeConversation.value?.messages ?? [])
 
 function newId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -18,22 +26,57 @@ function isAbort(err: unknown): boolean {
   return (err as { name?: string } | null)?.name === 'AbortError'
 }
 
+function makeTitle(content: string): string {
+  const first = content.trim().split('\n')[0].trim()
+  return first.length > 30 ? first.slice(0, 30) + '…' : first
+}
+
+async function load() {
+  const list = await db.getAllConversations()
+  list.sort((a, b) => b.updatedAt - a.updatedAt)
+  conversations.value = list
+}
+
+function select(id: string) {
+  activeId.value = id
+}
+
+async function persist(conv: Conversation) {
+  conv.updatedAt = Date.now()
+  await db.saveConversation(conv)
+}
+
 async function send(provider: string, model: string, content: string) {
   if (sending.value || !provider || !model) return
 
   sending.value = true
   controller = new AbortController()
 
-  messages.value.push({ id: newId(), role: 'user', content, createdAt: Date.now() })
-  messages.value.push({ id: newId(), role: 'assistant', content: '', createdAt: Date.now() })
+  // Create a conversation on the first message when none is active.
+  if (!activeConversation.value) {
+    conversations.value.unshift({
+      id: newId(),
+      title: makeTitle(content),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages: [],
+    })
+    activeId.value = conversations.value[0].id
+  }
 
-  // Mutate the reactive element (not a detached copy) so the UI updates while
-  // deltas stream in.
-  const assistant = messages.value[messages.value.length - 1]
+  const conv = activeConversation.value!
 
-  const apiMessages = messages.value
+  conv.messages.push({ id: newId(), role: 'user', content, createdAt: Date.now() })
+  conv.messages.push({ id: newId(), role: 'assistant', content: '', createdAt: Date.now() })
+
+  // Mutate the reactive element so the UI updates while deltas stream in.
+  const assistant = conv.messages[conv.messages.length - 1]
+
+  const apiMessages = conv.messages
     .filter((m) => m.id !== assistant.id)
     .map((m) => ({ role: m.role, content: m.content }))
+
+  void persist(conv)
 
   try {
     await sendChat(
@@ -46,13 +89,13 @@ async function send(provider: string, model: string, content: string) {
       },
     )
   } catch (err) {
-    // A user-initiated stop keeps whatever partial content was produced.
     if (!isAbort(err)) {
       assistant.content = friendlyChatError(provider, err)
     }
   } finally {
     sending.value = false
     controller = null
+    void persist(conv)
   }
 }
 
@@ -61,5 +104,15 @@ function stop() {
 }
 
 export function useChat() {
-  return { messages, sending, send, stop }
+  return {
+    conversations,
+    activeId,
+    activeConversation,
+    messages,
+    sending,
+    load,
+    select,
+    send,
+    stop,
+  }
 }

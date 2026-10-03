@@ -1,8 +1,15 @@
 <script setup lang="ts">
-defineProps<{ active: string }>()
+import type { Conversation } from '../types'
+
+defineProps<{
+  active: string
+  conversations: Conversation[]
+  activeId: string | null
+}>()
 
 defineEmits<{
   navigate: [view: 'chat' | 'settings' | 'about']
+  select: [id: string]
 }>()
 </script>
 
@@ -23,7 +30,16 @@ defineEmits<{
     <div class="scroll">
       <div class="section-title">History</div>
       <ul class="history">
-        <li class="history-empty">暂无对话</li>
+        <li v-if="conversations.length === 0" class="history-empty">暂无对话</li>
+        <li
+          v-for="c in conversations"
+          :key="c.id"
+          class="history-item"
+          :class="{ active: c.id === activeId }"
+          @click="$emit('select', c.id)"
+        >
+          <span class="history-title">{{ c.title }}</span>
+        </li>
       </ul>
     </div>
 
@@ -141,6 +157,35 @@ defineEmits<{
   padding: 6px;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: background 0.12s ease;
+}
+
+.history-item:hover {
+  background: var(--bg-hover);
+}
+
+.history-item.active {
+  background: var(--bg-hover);
+  color: var(--text);
+  font-weight: 550;
+}
+
+.history-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bottom {

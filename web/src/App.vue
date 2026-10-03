@@ -12,11 +12,14 @@ type View = 'chat' | 'settings' | 'about'
 const currentView = ref<View>('chat')
 
 const { providers, fetchProviders } = useProviders()
-const { messages, sending, send, stop } = useChat()
+const { conversations, activeId, messages, sending, load, select, send, stop } = useChat()
 const provider = ref('')
 const model = ref('')
 
-onMounted(fetchProviders)
+onMounted(() => {
+  fetchProviders()
+  load()
+})
 
 // Keep the selected provider/model valid whenever the provider list changes.
 watch(
@@ -46,7 +49,13 @@ function onSend(content: string) {
 
 <template>
   <div class="app">
-    <Sidebar :active="currentView" @navigate="currentView = $event" />
+    <Sidebar
+        :active="currentView"
+        :conversations="conversations"
+        :active-id="activeId"
+        @navigate="currentView = $event"
+        @select="select"
+      />
 
     <main class="main">
       <ChatView
