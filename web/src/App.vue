@@ -11,6 +11,7 @@ import { useSettings } from './composables/useSettings'
 type View = 'chat' | 'settings' | 'about'
 
 const currentView = ref<View>('chat')
+const menuOpen = ref(false)
 
 const { providers, fetchProviders } = useProviders()
 const {
@@ -70,6 +71,16 @@ function onSend(content: string) {
   send(provider.value, model.value, content)
 }
 
+function onSelect(id: string) {
+  select(id)
+  menuOpen.value = false
+}
+
+function onNavigate(view: View) {
+  currentView.value = view
+  menuOpen.value = false
+}
+
 function onNewChat() {
   newChat()
   currentView.value = 'chat'
@@ -83,15 +94,18 @@ function onDelete(id: string) {
 <template>
   <div class="app">
     <Sidebar
-        :active="currentView"
-        :conversations="conversations"
-        :active-id="activeId"
-        @navigate="currentView = $event"
-        @select="select"
-        @new-chat="onNewChat"
-        @rename="rename"
-        @delete="onDelete"
-      />
+      :active="currentView"
+      :conversations="conversations"
+      :active-id="activeId"
+      :mobile-open="menuOpen"
+      @navigate="onNavigate"
+      @select="onSelect"
+      @new-chat="onNewChat"
+      @rename="rename"
+      @delete="onDelete"
+    />
+
+    <div v-if="menuOpen" class="backdrop" @click="menuOpen = false"></div>
 
     <main class="main">
       <ChatView
@@ -104,7 +118,8 @@ function onDelete(id: string) {
         @send="onSend"
         @stop="stop"
         @clear="clear"
-        @settings="currentView = 'settings'"
+        @toggle-menu="menuOpen = !menuOpen"
+        @settings="onNavigate('settings')"
       />
       <SettingsView v-else-if="currentView === 'settings'" />
       <AboutView v-else />
@@ -125,5 +140,19 @@ function onDelete(id: string) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 30;
+  }
 }
 </style>

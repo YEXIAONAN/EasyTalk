@@ -20,6 +20,7 @@ const emit = defineEmits<{
   stop: []
   settings: []
   clear: []
+  toggleMenu: []
 }>()
 
 const listEl = ref<HTMLElement | null>(null)
@@ -46,6 +47,7 @@ watch(
       @update:model="emit('update:model', $event)"
       @settings="emit('settings')"
       @clear="emit('clear')"
+      @toggle-menu="emit('toggleMenu')"
     />
 
     <div ref="listEl" class="messages">

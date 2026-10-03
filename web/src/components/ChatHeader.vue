@@ -13,11 +13,18 @@ const emit = defineEmits<{
   'update:model': [name: string]
   settings: []
   clear: []
+  toggleMenu: []
 }>()
 </script>
 
 <template>
   <header class="header">
+    <button class="icon-btn menu-btn" title="菜单" @click="emit('toggleMenu')">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+        <path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
+
     <select
       class="select"
       :value="provider"
@@ -106,5 +113,22 @@ const emit = defineEmits<{
 
 .spacer {
   flex: 1;
+}
+
+.menu-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .menu-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .select {
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+  }
 }
 </style>

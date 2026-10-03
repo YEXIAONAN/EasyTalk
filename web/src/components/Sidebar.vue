@@ -6,6 +6,7 @@ defineProps<{
   active: string
   conversations: Conversation[]
   activeId: string | null
+  mobileOpen: boolean
 }>()
 
 const emit = defineEmits<{
@@ -32,7 +33,7 @@ function saveRename(id: string) {
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ open: mobileOpen }">
     <div class="brand">
       <span class="logo">ET</span>
       <span class="name">EasyTalk</span>
@@ -307,5 +308,23 @@ function saveRename(id: string) {
   background: var(--bg-hover);
   color: var(--text);
   font-weight: 550;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.24);
+  }
 }
 </style>
