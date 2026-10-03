@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { BRANDING } from '../config/branding'
 
 const version = ref('v0.1.0')
 
@@ -16,8 +17,8 @@ onMounted(async () => {
 
 <template>
   <div class="about">
-    <div class="mark">ET</div>
-    <h1>EasyTalk</h1>
+    <img class="mark" :src="BRANDING.logoMark" alt="EasyTalk" />
+    <h1>{{ BRANDING.name }}</h1>
     <p class="version">{{ version }}</p>
     <p class="desc">
       一个简单、轻量、自托管的 AI 对话工具，通过统一界面连接你自己的 AI API。
@@ -41,16 +42,9 @@ onMounted(async () => {
 }
 
 .mark {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 60px;
+  height: 60px;
   border-radius: 14px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
   margin-bottom: 16px;
 }
 

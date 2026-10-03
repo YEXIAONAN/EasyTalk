@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { BRANDING } from '../config/branding'
 
 const props = defineProps<{
   active: string
@@ -42,8 +43,8 @@ function fmtTokens(n: number | null): string {
 <template>
   <aside class="sidebar" :class="{ open: mobileOpen }">
     <div class="brand">
-      <span class="logo">ET</span>
-      <span class="name">EasyTalk</span>
+      <img class="logo" :src="BRANDING.logoMark" alt="EasyTalk" />
+      <span class="name">{{ BRANDING.name }}</span>
     </div>
 
     <div class="scroll">
@@ -170,17 +171,10 @@ function fmtTokens(n: number | null): string {
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
+  display: block;
+  width: 28px;
+  height: 28px;
   border-radius: 7px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
 }
 
 .name {
