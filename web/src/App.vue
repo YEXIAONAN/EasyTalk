@@ -14,7 +14,20 @@ const currentView = ref<View>('chat')
 const menuOpen = ref(false)
 
 const { providers, fetchProviders } = useProviders()
-const { messages, sending, clear, send, stop } = useChat()
+const {
+  messages,
+  sending,
+  requestCount,
+  inputTokens,
+  outputTokens,
+  totalTokens,
+  cachedTokens,
+  lastResponseMs,
+  firstTokenMs,
+  clear,
+  send,
+  stop,
+} = useChat()
 const { settings, applyTheme } = useSettings()
 const provider = ref('')
 const model = ref('')
@@ -74,6 +87,15 @@ function onNavigate(view: View) {
     <Sidebar
       :active="currentView"
       :mobile-open="menuOpen"
+      :provider="provider"
+      :model="model"
+      :request-count="requestCount"
+      :input-tokens="inputTokens"
+      :output-tokens="outputTokens"
+      :cached-tokens="cachedTokens"
+      :total-tokens="totalTokens"
+      :last-response-ms="lastResponseMs"
+      :first-token-ms="firstTokenMs"
       @navigate="onNavigate"
       @clear="onClearSession"
     />

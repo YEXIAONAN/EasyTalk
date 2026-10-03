@@ -9,6 +9,15 @@ const { settings } = useSettings()
 const messages = ref<ChatMessage[]>([])
 const sending = ref(false)
 
+// Session metrics (in-memory only; reset on refresh / clear session).
+const requestCount = ref(0)
+const inputTokens = ref(0)
+const outputTokens = ref(0)
+const totalTokens = ref(0)
+const cachedTokens = ref<number | null>(null)
+const lastResponseMs = ref<number | null>(null)
+const firstTokenMs = ref<number | null>(null)
+
 let controller: AbortController | null = null
 
 function newId(): string {
@@ -73,8 +82,28 @@ function stop() {
 function clear() {
   if (sending.value) return
   messages.value = []
+  requestCount.value = 0
+  inputTokens.value = 0
+  outputTokens.value = 0
+  totalTokens.value = 0
+  cachedTokens.value = null
+  lastResponseMs.value = null
+  firstTokenMs.value = null
 }
 
 export function useChat() {
-  return { messages, sending, send, stop, clear }
+  return {
+    messages,
+    sending,
+    requestCount,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    cachedTokens,
+    lastResponseMs,
+    firstTokenMs,
+    send,
+    stop,
+    clear,
+  }
 }

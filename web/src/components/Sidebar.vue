@@ -1,13 +1,42 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   active: string
   mobileOpen: boolean
+  provider: string
+  model: string
+  requestCount: number
+  inputTokens: number
+  outputTokens: number
+  cachedTokens: number | null
+  totalTokens: number
+  lastResponseMs: number | null
+  firstTokenMs: number | null
 }>()
 
 const emit = defineEmits<{
   navigate: [view: 'chat' | 'settings' | 'about']
   clear: []
 }>()
+
+const connected = computed(() => props.provider !== '')
+
+const numberFmt = new Intl.NumberFormat('en-US')
+
+function fmt(n: number): string {
+  return numberFmt.format(n)
+}
+
+function fmtDuration(ms: number | null): string {
+  if (ms === null) return '—'
+  if (ms < 1000) return `${Math.round(ms)}ms`
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
+function fmtTokens(n: number | null): string {
+  return n === null ? '—' : numberFmt.format(n)
+}
 </script>
 
 <template>
@@ -17,7 +46,65 @@ const emit = defineEmits<{
       <span class="name">EasyTalk</span>
     </div>
 
-    <div class="scroll"></div>
+    <div class="scroll">
+      <!-- Current session -->
+      <div class="panel">
+        <div class="panel-title">Current Session</div>
+        <div class="stat">
+          <span class="stat-label">Provider</span>
+          <span class="stat-value">{{ provider || '—' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Model</span>
+          <span class="stat-value">{{ model || '—' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Status</span>
+          <span class="stat-value status" :class="{ connected }">
+            <i class="dot"></i>
+            {{ connected ? 'Connected' : 'Idle' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Token usage -->
+      <div class="panel">
+        <div class="panel-title">Token Usage</div>
+        <div class="stat">
+          <span class="stat-label">Input</span>
+          <span class="stat-value">{{ fmt(inputTokens) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Output</span>
+          <span class="stat-value">{{ fmt(outputTokens) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Cached</span>
+          <span class="stat-value">{{ fmtTokens(cachedTokens) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total</span>
+          <span class="stat-value">{{ fmt(totalTokens) }}</span>
+        </div>
+      </div>
+
+      <!-- Request -->
+      <div class="panel">
+        <div class="panel-title">Request</div>
+        <div class="stat">
+          <span class="stat-label">Requests</span>
+          <span class="stat-value">{{ requestCount }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Last Response</span>
+          <span class="stat-value">{{ fmtDuration(lastResponseMs) }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">First Token</span>
+          <span class="stat-value">{{ fmtDuration(firstTokenMs) }}</span>
+        </div>
+      </div>
+    </div>
 
     <nav class="bottom">
       <button class="nav-item" @click="emit('clear')">
@@ -104,6 +191,60 @@ const emit = defineEmits<{
 .scroll {
   flex: 1;
   overflow-y: auto;
+}
+
+.panel {
+  padding: 6px 2px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0 6px 8px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 6px;
+  font-size: 13px;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  color: var(--text);
+  font-weight: 550;
+  text-align: right;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status.connected .dot {
+  background: #22c55e;
 }
 
 .bottom {
