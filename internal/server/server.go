@@ -42,10 +42,6 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 
 	s.mux.HandleFunc("GET /api/providers", s.handleListProviders)
-	s.mux.HandleFunc("POST /api/providers", s.handleCreateProvider)
-	s.mux.HandleFunc("PUT /api/providers/{name}", s.handleUpdateProvider)
-	s.mux.HandleFunc("DELETE /api/providers/{name}", s.handleDeleteProvider)
-	s.mux.HandleFunc("POST /api/providers/{name}/test", s.handleTestProvider)
 
 	s.mux.HandleFunc("POST /api/chat", s.handleChat)
 

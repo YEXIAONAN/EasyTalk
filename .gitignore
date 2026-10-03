@@ -5,6 +5,7 @@ config.json
 # Secrets
 .env
 .env.*
+!.env.example
 
 # Logs
 *.log

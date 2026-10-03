@@ -1,8 +1,4 @@
 {
-  "server": {
-    "host": "0.0.0.0",
-    "port": 8080
-  },
   "providers": [
     {
       "name": "DeepSeek",
@@ -11,6 +7,15 @@
       "models": [
         "deepseek-chat",
         "deepseek-reasoner"
+      ]
+    },
+    {
+      "name": "OpenRouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "YOUR_API_KEY",
+      "models": [
+        "google/gemini-2.0-flash-001",
+        "anthropic/claude-3.5-sonnet"
       ]
     }
   ]

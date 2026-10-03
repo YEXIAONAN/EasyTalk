@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"easytalk"
 	"easytalk/internal/config"
@@ -14,11 +16,17 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "config.json", "path to the config file")
+	env := config.LoadEnv()
+
+	configPath := flag.String("config", env.ConfigPath, "path to the config file")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
+		if errors.Is(err, config.ErrNotFound) {
+			printMissingConfig(*configPath)
+			os.Exit(1)
+		}
 		log.Fatalf("load config: %v", err)
 	}
 
@@ -29,8 +37,8 @@ func main() {
 
 	srv := server.New(cfg, *configPath, static)
 
-	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
-	printStartup(cfg.Server.Port, *configPath)
+	addr := fmt.Sprintf("%s:%d", env.Host, env.Port)
+	printStartup(env.Port, *configPath)
 
 	if err := http.ListenAndServe(addr, srv.Handler()); err != nil {
 		log.Fatalf("server: %v", err)
@@ -44,6 +52,14 @@ func printStartup(port int, configPath string) {
 		fmt.Printf("LAN:\nhttp://%s:%d\n\n", ip, port)
 	}
 	fmt.Printf("Config:\n%s\n", configPath)
+}
+
+func printMissingConfig(path string) {
+	fmt.Printf("EasyTalk %s\n\n", version.Version)
+	fmt.Printf("Config file not found:\n%s\n\n", path)
+	fmt.Printf("Please copy:\nconfig.example.json\n\n")
+	fmt.Printf("to:\nconfig.json\n\n")
+	fmt.Printf("Then configure your AI providers.\n")
 }
 
 // lanIP returns the first non-loopback IPv4 address, or an empty string.
