@@ -28,9 +28,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(res.status, message)
   }
 
-  if (res.status === 204) {
-    return undefined as T
-  }
   return (await res.json()) as T
 }
 
@@ -38,23 +35,6 @@ export function listProviders(): Promise<Provider[]> {
   return request<Provider[]>('/providers')
 }
 
-export function createProvider(p: Provider): Promise<Provider> {
-  return request<Provider>('/providers', { method: 'POST', body: JSON.stringify(p) })
-}
-
-export function updateProvider(name: string, p: Provider): Promise<Provider> {
-  return request<Provider>(`/providers/${encodeURIComponent(name)}`, {
-    method: 'PUT',
-    body: JSON.stringify(p),
-  })
-}
-
-export function deleteProvider(name: string): Promise<void> {
-  return request<void>(`/providers/${encodeURIComponent(name)}`, { method: 'DELETE' })
-}
-
-export function testProvider(name: string): Promise<{ ok: boolean }> {
-  return request<{ ok: boolean }>(`/providers/${encodeURIComponent(name)}/test`, {
-    method: 'POST',
-  })
+export function reloadConfig(): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/config/reload', { method: 'POST' })
 }

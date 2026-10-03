@@ -1,7 +1,5 @@
 export interface Provider {
   name: string
-  base_url: string
-  api_key: string
   models: string[]
 }
 

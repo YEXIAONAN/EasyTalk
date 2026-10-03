@@ -15,21 +15,6 @@ async function fetchProviders() {
   }
 }
 
-async function addProvider(p: Provider) {
-  await api.createProvider(p)
-  await fetchProviders()
-}
-
-async function editProvider(name: string, p: Provider) {
-  await api.updateProvider(name, p)
-  await fetchProviders()
-}
-
-async function removeProvider(name: string) {
-  await api.deleteProvider(name)
-  await fetchProviders()
-}
-
 export function useProviders() {
-  return { providers, loading, fetchProviders, addProvider, editProvider, removeProvider }
+  return { providers, loading, fetchProviders }
 }
