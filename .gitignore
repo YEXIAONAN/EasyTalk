@@ -1,0 +1,28 @@
+# --- EasyTalk ---
+# Local runtime config (may contain API keys)
+config.json
+
+# Secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# Go build output
+/easytalk
+/easytalk.exe
+/dist
+
+# Node / Vue
+web/node_modules/
+web/dist/
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+
+# Misc
+*.tmp
+*.swp
