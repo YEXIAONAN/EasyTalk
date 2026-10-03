@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("frontend assets: %v", err)
 	}
 
-	srv := server.New(cfg, static)
+	srv := server.New(cfg, *configPath, static)
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	printStartup(cfg.Server.Port, *configPath)
