@@ -5,14 +5,12 @@ defineProps<{
   providers: Provider[]
   provider: string
   model: string
-  hasMessages: boolean
 }>()
 
 const emit = defineEmits<{
   'update:provider': [name: string]
   'update:model': [name: string]
   settings: []
-  clear: []
   toggleMenu: []
 }>()
 </script>
@@ -54,18 +52,6 @@ const emit = defineEmits<{
     </select>
 
     <div class="spacer"></div>
-
-    <button v-if="hasMessages" class="icon-btn" title="清空当前对话" @click="emit('clear')">
-      <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
-        <path
-          d="M3 5h10M6.5 5V3.5h3V5M5 5l.5 8h5l.5-8"
-          stroke="currentColor"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </button>
 
     <button class="icon-btn" title="Settings" @click="emit('settings')">
       <svg viewBox="0 0 16 16" width="16" height="16" fill="none">

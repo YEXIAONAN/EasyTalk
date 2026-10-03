@@ -14,27 +14,13 @@ const currentView = ref<View>('chat')
 const menuOpen = ref(false)
 
 const { providers, fetchProviders } = useProviders()
-const {
-  conversations,
-  activeId,
-  messages,
-  sending,
-  load,
-  select,
-  newChat,
-  rename,
-  remove,
-  clear,
-  send,
-  stop,
-} = useChat()
+const { messages, sending, clear, send, stop } = useChat()
 const { settings, applyTheme } = useSettings()
 const provider = ref('')
 const model = ref('')
 
 onMounted(() => {
   fetchProviders()
-  load()
   applyTheme()
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme)
 })
@@ -71,8 +57,9 @@ function onSend(content: string) {
   send(provider.value, model.value, content)
 }
 
-function onSelect(id: string) {
-  select(id)
+function onClearSession() {
+  clear()
+  currentView.value = 'chat'
   menuOpen.value = false
 }
 
@@ -80,29 +67,15 @@ function onNavigate(view: View) {
   currentView.value = view
   menuOpen.value = false
 }
-
-function onNewChat() {
-  newChat()
-  currentView.value = 'chat'
-}
-
-function onDelete(id: string) {
-  if (confirm('删除该对话？')) remove(id)
-}
 </script>
 
 <template>
   <div class="app">
     <Sidebar
       :active="currentView"
-      :conversations="conversations"
-      :active-id="activeId"
       :mobile-open="menuOpen"
       @navigate="onNavigate"
-      @select="onSelect"
-      @new-chat="onNewChat"
-      @rename="rename"
-      @delete="onDelete"
+      @clear="onClearSession"
     />
 
     <div v-if="menuOpen" class="backdrop" @click="menuOpen = false"></div>
@@ -117,7 +90,6 @@ function onDelete(id: string) {
         :sending="sending"
         @send="onSend"
         @stop="stop"
-        @clear="clear"
         @toggle-menu="menuOpen = !menuOpen"
         @settings="onNavigate('settings')"
       />

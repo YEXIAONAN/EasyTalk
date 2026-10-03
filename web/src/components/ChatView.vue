@@ -19,7 +19,6 @@ const emit = defineEmits<{
   send: [content: string]
   stop: []
   settings: []
-  clear: []
   toggleMenu: []
 }>()
 
@@ -42,11 +41,9 @@ watch(
       :providers="providers"
       :provider="provider"
       :model="model"
-      :has-messages="messages.length > 0"
       @update:provider="emit('update:provider', $event)"
       @update:model="emit('update:model', $event)"
       @settings="emit('settings')"
-      @clear="emit('clear')"
       @toggle-menu="emit('toggleMenu')"
     />
 

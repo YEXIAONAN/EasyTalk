@@ -7,7 +7,6 @@ const defaults: Settings = {
   defaultProvider: '',
   defaultModel: '',
   streamResponse: true,
-  saveHistory: true,
   theme: 'system',
   temperature: null,
   maxTokens: null,
