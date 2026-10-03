@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 
+	"easytalk"
 	"easytalk/internal/config"
 	"easytalk/internal/server"
 	"easytalk/internal/version"
@@ -22,7 +22,12 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	srv := server.New(cfg, os.DirFS("web/dist"))
+	static, err := easytalk.FrontendFS()
+	if err != nil {
+		log.Fatalf("frontend assets: %v", err)
+	}
+
+	srv := server.New(cfg, static)
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	printStartup(cfg.Server.Port, *configPath)
