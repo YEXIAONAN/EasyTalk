@@ -1,0 +1,66 @@
+<script setup lang="ts"></script>
+
+<template>
+  <div class="about">
+    <div class="mark">ET</div>
+    <h1>EasyTalk</h1>
+    <p class="version">v0.1.0</p>
+    <p class="desc">
+      一个简单、轻量、自托管的 AI 对话工具，通过统一界面连接你自己的 AI API。
+    </p>
+    <p class="desc sub">
+      无需注册、无需数据库、无需云服务。所有对话都在本地浏览器中完成，API Key
+      仅保存在你的设备上。
+    </p>
+  </div>
+</template>
+
+<style scoped>
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 32px;
+}
+
+.mark {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+.version {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.desc {
+  max-width: 420px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.desc.sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+</style>

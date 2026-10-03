@@ -1,31 +1,53 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref } from 'vue'
+import Sidebar from './components/Sidebar.vue'
+import ChatView from './components/ChatView.vue'
+import SettingsView from './views/SettingsView.vue'
+import AboutView from './views/AboutView.vue'
+import type { Provider } from './types'
+
+type View = 'chat' | 'settings' | 'about'
+
+const currentView = ref<View>('chat')
+
+// Providers are loaded from the backend in a later phase.
+const providers = ref<Provider[]>([])
+const provider = ref('')
+const model = ref('')
+const sending = ref(false)
+</script>
 
 <template>
-  <div class="welcome">
-    <h1>EasyTalk</h1>
-    <p>一个简单、轻量、自托管的 AI 对话工具。</p>
+  <div class="app">
+    <Sidebar :active="currentView" @navigate="currentView = $event" />
+
+    <main class="main">
+      <ChatView
+        v-if="currentView === 'chat'"
+        v-model:provider="provider"
+        v-model:model="model"
+        :providers="providers"
+        :sending="sending"
+        @settings="currentView = 'settings'"
+      />
+      <SettingsView v-else-if="currentView === 'settings'" />
+      <AboutView v-else />
+    </main>
   </div>
 </template>
 
 <style scoped>
-.welcome {
+.app {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-}
-
-h1 {
-  font-size: 28px;
-  font-weight: 650;
-  margin: 0;
-  color: var(--color-primary);
-}
-
-p {
-  margin: 0;
-  color: var(--color-text-secondary);
 }
 </style>
