@@ -42,6 +42,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 
 	s.mux.HandleFunc("GET /api/providers", s.handleListProviders)
+	s.mux.HandleFunc("POST /api/config/reload", s.handleReloadConfig)
 
 	s.mux.HandleFunc("POST /api/chat", s.handleChat)
 

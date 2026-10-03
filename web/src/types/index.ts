@@ -20,8 +20,6 @@ export interface ChatMessage {
 export type Theme = 'light' | 'dark' | 'system'
 
 export interface Settings {
-  defaultProvider: string
-  defaultModel: string
   streamResponse: boolean
   theme: Theme
   temperature: number | null

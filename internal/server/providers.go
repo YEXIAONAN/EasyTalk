@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"easytalk/internal/config"
@@ -36,4 +37,22 @@ func (s *Server) findProvider(name string) (config.Provider, bool) {
 		}
 	}
 	return config.Provider{}, false
+}
+
+func (s *Server) handleReloadConfig(w http.ResponseWriter, r *http.Request) {
+	cfg, err := config.Load(s.configPath)
+	if err != nil {
+		if errors.Is(err, config.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "config file not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	s.mu.Lock()
+	s.cfg = cfg
+	s.mu.Unlock()
+
+	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }

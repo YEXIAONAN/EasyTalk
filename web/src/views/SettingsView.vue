@@ -1,43 +1,34 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useProviders } from '../composables/useProviders'
 import { useSettings } from '../composables/useSettings'
+import * as api from '../services/api'
 
-const { providers } = useProviders()
+const { fetchProviders } = useProviders()
 const { settings } = useSettings()
+
+const reloadState = ref('')
+
+async function onReload() {
+  reloadState.value = '加载中…'
+  try {
+    await api.reloadConfig()
+    await fetchProviders()
+    reloadState.value = '已重新加载'
+  } catch {
+    reloadState.value = '重载失败'
+  }
+}
 
 function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
   const value = (e.target as HTMLInputElement).value
   settings[key] = value === '' ? null : Number(value)
 }
-
-const modelsOfSelectedProvider = () =>
-  providers.value.find((p) => p.name === settings.defaultProvider)?.models ?? []
 </script>
 
 <template>
   <div class="settings">
     <h1>Settings</h1>
-
-    <!-- General -->
-    <section class="section">
-      <div class="section-head"><h2>General</h2></div>
-      <div class="fields">
-        <div class="field">
-          <label>Default Provider</label>
-          <select v-model="settings.defaultProvider" class="select-full">
-            <option value="">（无）</option>
-            <option v-for="p in providers" :key="p.name" :value="p.name">{{ p.name }}</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Default Model</label>
-          <select v-model="settings.defaultModel" class="select-full">
-            <option value="">（无）</option>
-            <option v-for="m in modelsOfSelectedProvider()" :key="m" :value="m">{{ m }}</option>
-          </select>
-        </div>
-      </div>
-    </section>
 
     <!-- Chat -->
     <section class="section">
@@ -115,6 +106,20 @@ const modelsOfSelectedProvider = () =>
         </div>
       </div>
     </section>
+
+    <!-- Configuration -->
+    <section class="section">
+      <div class="section-head"><h2>Configuration</h2></div>
+      <div class="fields">
+        <div class="field">
+          <p class="hint">修改 config.json 后点击重新加载，刷新 Provider 和 Model 列表。</p>
+          <div class="reload-row">
+            <button class="btn primary" @click="onReload">Reload Config</button>
+            <span v-if="reloadState" class="reload-state">{{ reloadState }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -171,8 +176,7 @@ h1 {
   margin-bottom: 6px;
 }
 
-.field input:not([type='radio']):not([type='checkbox']),
-.select-full {
+.field input:not([type='radio']):not([type='checkbox']) {
   width: 100%;
   max-width: 320px;
   padding: 7px 10px;
@@ -182,8 +186,7 @@ h1 {
   background: var(--bg-input);
 }
 
-.field input:focus,
-.select-full:focus {
+.field input:focus {
   outline: none;
   border-color: var(--primary);
 }
@@ -208,5 +211,45 @@ h1 {
 
 .theme-options .row {
   padding: 0;
+}
+
+.hint {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.reload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reload-state {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--bg-hover);
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn.primary:hover {
+  background: var(--primary-hover);
 }
 </style>

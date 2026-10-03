@@ -45,14 +45,12 @@ watch(
   providers,
   (list) => {
     if (!list.some((p) => p.name === provider.value)) {
-      const def = list.find((p) => p.name === settings.defaultProvider)
-      provider.value = (def ?? list[0])?.name ?? ''
+      provider.value = list[0]?.name ?? ''
     }
     const current = list.find((p) => p.name === provider.value)
     const models = current?.models ?? []
     if (!models.includes(model.value)) {
-      const defModel = settings.defaultModel && models.includes(settings.defaultModel)
-      model.value = defModel ? settings.defaultModel : (models[0] ?? '')
+      model.value = models[0] ?? ''
     }
   },
   { immediate: true },
@@ -61,9 +59,7 @@ watch(
 // When the provider changes, default to its first model.
 watch(provider, (name) => {
   const current = providers.value.find((p) => p.name === name)
-  const models = current?.models ?? []
-  const defModel = settings.defaultModel && models.includes(settings.defaultModel)
-  model.value = defModel ? settings.defaultModel : (models[0] ?? '')
+  model.value = current?.models[0] ?? ''
 })
 
 function onSend(content: string) {

@@ -4,8 +4,6 @@ import type { Settings } from '../types'
 const STORAGE_KEY = 'easytalk.settings'
 
 const defaults: Settings = {
-  defaultProvider: '',
-  defaultModel: '',
   streamResponse: true,
   theme: 'system',
   temperature: null,
