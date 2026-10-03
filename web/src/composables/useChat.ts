@@ -41,9 +41,41 @@ function select(id: string) {
   activeId.value = id
 }
 
+function newChat() {
+  if (sending.value) return
+  activeId.value = null
+}
+
+function rename(id: string, title: string) {
+  const conv = conversations.value.find((c) => c.id === id)
+  const t = title.trim()
+  if (!conv || !t) return
+  conv.title = t
+  void persist(conv)
+}
+
+async function remove(id: string) {
+  const idx = conversations.value.findIndex((c) => c.id === id)
+  if (idx === -1) return
+  conversations.value.splice(idx, 1)
+  if (activeId.value === id) {
+    activeId.value = null
+  }
+  await db.deleteConversation(id)
+}
+
+function clear() {
+  const conv = activeConversation.value
+  if (!conv || sending.value) return
+  conv.messages = []
+  void persist(conv)
+}
+
 async function persist(conv: Conversation) {
   conv.updatedAt = Date.now()
-  await db.saveConversation(conv)
+  // Structured clone can't serialize Vue reactive proxies, so store a plain copy.
+  const plain = JSON.parse(JSON.stringify(conv)) as Conversation
+  await db.saveConversation(plain)
 }
 
 async function send(provider: string, model: string, content: string) {
@@ -112,6 +144,10 @@ export function useChat() {
     sending,
     load,
     select,
+    newChat,
+    rename,
+    remove,
+    clear,
     send,
     stop,
   }

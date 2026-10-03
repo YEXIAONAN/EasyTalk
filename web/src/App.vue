@@ -12,7 +12,20 @@ type View = 'chat' | 'settings' | 'about'
 const currentView = ref<View>('chat')
 
 const { providers, fetchProviders } = useProviders()
-const { conversations, activeId, messages, sending, load, select, send, stop } = useChat()
+const {
+  conversations,
+  activeId,
+  messages,
+  sending,
+  load,
+  select,
+  newChat,
+  rename,
+  remove,
+  clear,
+  send,
+  stop,
+} = useChat()
 const provider = ref('')
 const model = ref('')
 
@@ -45,6 +58,15 @@ watch(provider, (name) => {
 function onSend(content: string) {
   send(provider.value, model.value, content)
 }
+
+function onNewChat() {
+  newChat()
+  currentView.value = 'chat'
+}
+
+function onDelete(id: string) {
+  if (confirm('删除该对话？')) remove(id)
+}
 </script>
 
 <template>
@@ -55,6 +77,9 @@ function onSend(content: string) {
         :active-id="activeId"
         @navigate="currentView = $event"
         @select="select"
+        @new-chat="onNewChat"
+        @rename="rename"
+        @delete="onDelete"
       />
 
     <main class="main">
@@ -67,6 +92,7 @@ function onSend(content: string) {
         :sending="sending"
         @send="onSend"
         @stop="stop"
+        @clear="clear"
         @settings="currentView = 'settings'"
       />
       <SettingsView v-else-if="currentView === 'settings'" />

@@ -19,6 +19,7 @@ const emit = defineEmits<{
   send: [content: string]
   stop: []
   settings: []
+  clear: []
 }>()
 
 const listEl = ref<HTMLElement | null>(null)
@@ -40,9 +41,11 @@ watch(
       :providers="providers"
       :provider="provider"
       :model="model"
+      :has-messages="messages.length > 0"
       @update:provider="emit('update:provider', $event)"
       @update:model="emit('update:model', $event)"
       @settings="emit('settings')"
+      @clear="emit('clear')"
     />
 
     <div ref="listEl" class="messages">
