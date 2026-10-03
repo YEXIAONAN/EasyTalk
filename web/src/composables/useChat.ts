@@ -5,6 +5,8 @@ import { sendChat, friendlyChatError } from '../services/chat'
 const messages = ref<ChatMessage[]>([])
 const sending = ref(false)
 
+let controller: AbortController | null = null
+
 function newId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
@@ -12,10 +14,15 @@ function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
 }
 
+function isAbort(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === 'AbortError'
+}
+
 async function send(provider: string, model: string, content: string) {
   if (sending.value || !provider || !model) return
 
   sending.value = true
+  controller = new AbortController()
 
   messages.value.push({ id: newId(), role: 'user', content, createdAt: Date.now() })
   messages.value.push({ id: newId(), role: 'assistant', content: '', createdAt: Date.now() })
@@ -32,18 +39,27 @@ async function send(provider: string, model: string, content: string) {
     await sendChat(
       { provider, model, messages: apiMessages, stream: true },
       {
+        signal: controller.signal,
         onDelta: (delta) => {
           assistant.content += delta
         },
       },
     )
   } catch (err) {
-    assistant.content = friendlyChatError(provider, err)
+    // A user-initiated stop keeps whatever partial content was produced.
+    if (!isAbort(err)) {
+      assistant.content = friendlyChatError(provider, err)
+    }
   } finally {
     sending.value = false
+    controller = null
   }
 }
 
+function stop() {
+  controller?.abort()
+}
+
 export function useChat() {
-  return { messages, sending, send }
+  return { messages, sending, send, stop }
 }

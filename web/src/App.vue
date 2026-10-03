@@ -12,7 +12,7 @@ type View = 'chat' | 'settings' | 'about'
 const currentView = ref<View>('chat')
 
 const { providers, fetchProviders } = useProviders()
-const { messages, sending, send } = useChat()
+const { messages, sending, send, stop } = useChat()
 const provider = ref('')
 const model = ref('')
 
@@ -57,6 +57,7 @@ function onSend(content: string) {
         :messages="messages"
         :sending="sending"
         @send="onSend"
+        @stop="stop"
         @settings="currentView = 'settings'"
       />
       <SettingsView v-else-if="currentView === 'settings'" />
