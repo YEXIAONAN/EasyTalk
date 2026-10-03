@@ -1,10 +1,24 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
+const version = ref('v0.1.0')
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/health')
+    const data = await res.json()
+    if (data?.version) version.value = data.version
+  } catch {
+    /* keep default */
+  }
+})
+</script>
 
 <template>
   <div class="about">
     <div class="mark">ET</div>
     <h1>EasyTalk</h1>
-    <p class="version">v0.1.0</p>
+    <p class="version">{{ version }}</p>
     <p class="desc">
       一个简单、轻量、自托管的 AI 对话工具，通过统一界面连接你自己的 AI API。
     </p>
