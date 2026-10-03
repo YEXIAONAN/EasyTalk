@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"easytalk/internal/provider"
@@ -40,6 +41,11 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		TopP:        req.TopP,
 	}
 
+	if req.Stream {
+		s.streamChat(w, r, p.BaseURL, p.APIKey, chatReq)
+		return
+	}
+
 	content, err := provider.Chat(r.Context(), p.BaseURL, p.APIKey, chatReq)
 	if err != nil {
 		s.writeChatError(w, err)
@@ -49,6 +55,25 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		"role":    "assistant",
 		"content": content,
 	})
+}
+
+func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, baseURL, apiKey string, req provider.ChatRequest) {
+	upstream, err := provider.Stream(r.Context(), baseURL, apiKey, req)
+	if err != nil {
+		s.writeChatError(w, err)
+		return
+	}
+	defer upstream.Body.Close()
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	if flusher, ok := w.(http.Flusher); ok {
+		flusher.Flush()
+	}
+	_, _ = io.Copy(w, upstream.Body)
 }
 
 func (s *Server) writeChatError(w http.ResponseWriter, err error) {

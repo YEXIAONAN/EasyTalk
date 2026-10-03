@@ -41,6 +41,27 @@ func Chat(ctx context.Context, baseURL, apiKey string, req ChatRequest) (string,
 	return out.Choices[0].Message.Content, nil
 }
 
+// Stream sends a streaming completion request and returns the upstream response
+// whose body carries an SSE stream. The caller is responsible for closing the
+// body.
+func Stream(ctx context.Context, baseURL, apiKey string, req ChatRequest) (*http.Response, error) {
+	req.Stream = true
+	httpReq, err := newChatRequest(ctx, baseURL, apiKey, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return nil, &Error{Status: http.StatusBadGateway, Message: fmt.Sprintf("unable to connect: %v", err)}
+	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		return nil, providerError(resp)
+	}
+	return resp, nil
+}
+
 func newChatRequest(ctx context.Context, baseURL, apiKey string, req ChatRequest) (*http.Request, error) {
 	body, err := json.Marshal(req)
 	if err != nil {

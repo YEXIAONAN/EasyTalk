@@ -2,8 +2,10 @@ package provider
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -52,5 +54,30 @@ func TestChatInvalidKey(t *testing.T) {
 	}
 	if pe.Status != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want %d", pe.Status, http.StatusUnauthorized)
+	}
+}
+
+func TestStream(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"hel\"}}]}\n\n"))
+	}))
+	defer srv.Close()
+
+	resp, err := Stream(context.Background(), srv.URL, "sk-test", ChatRequest{
+		Model:    "m",
+		Messages: []Message{{Role: "user", Content: "hi"}},
+	})
+	if err != nil {
+		t.Fatalf("Stream: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !strings.Contains(string(body), `"delta"`) {
+		t.Fatalf("unexpected body %q", string(body))
 	}
 }
