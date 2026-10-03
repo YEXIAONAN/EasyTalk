@@ -9,15 +9,12 @@ import (
 	"time"
 )
 
-// ErrInvalidKey is returned when the provider rejects the supplied API key.
-var ErrInvalidKey = errors.New("invalid api key")
-
 const testTimeout = 10 * time.Second
 
 // Test verifies that a provider is reachable and its API key is accepted by
 // requesting the OpenAI-compatible /models endpoint.
 func Test(baseURL, apiKey string) error {
-	base := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	base := normalizeBase(baseURL)
 	if base == "" {
 		return errors.New("base url is empty")
 	}
