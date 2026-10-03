@@ -92,6 +92,16 @@ func (s *Server) handleUpdateProvider(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Prevent a rename from colliding with an existing provider.
+	if p.Name != name {
+		for _, other := range s.cfg.Providers {
+			if other.Name == p.Name {
+				writeError(w, http.StatusConflict, "provider already exists")
+				return
+			}
+		}
+	}
+
 	for i, existing := range s.cfg.Providers {
 		if existing.Name == name {
 			if isMasked(p.APIKey) {

@@ -1,20 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import ChatView from './components/ChatView.vue'
 import SettingsView from './views/SettingsView.vue'
 import AboutView from './views/AboutView.vue'
-import type { Provider } from './types'
+import { useProviders } from './composables/useProviders'
 
 type View = 'chat' | 'settings' | 'about'
 
 const currentView = ref<View>('chat')
 
-// Providers are loaded from the backend in a later phase.
-const providers = ref<Provider[]>([])
+const { providers, fetchProviders } = useProviders()
 const provider = ref('')
 const model = ref('')
 const sending = ref(false)
+
+onMounted(fetchProviders)
+
+// Keep the selected provider/model valid whenever the provider list changes.
+watch(
+  providers,
+  (list) => {
+    if (!list.some((p) => p.name === provider.value)) {
+      provider.value = list[0]?.name ?? ''
+      model.value = list[0]?.models[0] ?? ''
+    } else if (!model.value) {
+      const current = list.find((p) => p.name === provider.value)
+      model.value = current?.models[0] ?? ''
+    }
+  },
+  { immediate: true },
+)
+
+// When the provider changes, default to its first model.
+watch(provider, (name) => {
+  const current = providers.value.find((p) => p.name === name)
+  model.value = current?.models[0] ?? ''
+})
 </script>
 
 <template>
