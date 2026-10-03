@@ -19,3 +19,16 @@ export interface Conversation {
   updatedAt: number
   messages: ChatMessage[]
 }
+
+export type Theme = 'light' | 'dark' | 'system'
+
+export interface Settings {
+  defaultProvider: string
+  defaultModel: string
+  streamResponse: boolean
+  saveHistory: boolean
+  theme: Theme
+  temperature: number | null
+  maxTokens: number | null
+  topP: number | null
+}

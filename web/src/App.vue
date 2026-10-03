@@ -6,6 +6,7 @@ import SettingsView from './views/SettingsView.vue'
 import AboutView from './views/AboutView.vue'
 import { useProviders } from './composables/useProviders'
 import { useChat } from './composables/useChat'
+import { useSettings } from './composables/useSettings'
 
 type View = 'chat' | 'settings' | 'about'
 
@@ -26,24 +27,32 @@ const {
   send,
   stop,
 } = useChat()
+const { settings, applyTheme } = useSettings()
 const provider = ref('')
 const model = ref('')
 
 onMounted(() => {
   fetchProviders()
   load()
+  applyTheme()
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme)
 })
+
+watch(() => settings.theme, applyTheme)
 
 // Keep the selected provider/model valid whenever the provider list changes.
 watch(
   providers,
   (list) => {
     if (!list.some((p) => p.name === provider.value)) {
-      provider.value = list[0]?.name ?? ''
-      model.value = list[0]?.models[0] ?? ''
-    } else if (!model.value) {
-      const current = list.find((p) => p.name === provider.value)
-      model.value = current?.models[0] ?? ''
+      const def = list.find((p) => p.name === settings.defaultProvider)
+      provider.value = (def ?? list[0])?.name ?? ''
+    }
+    const current = list.find((p) => p.name === provider.value)
+    const models = current?.models ?? []
+    if (!models.includes(model.value)) {
+      const defModel = settings.defaultModel && models.includes(settings.defaultModel)
+      model.value = defModel ? settings.defaultModel : (models[0] ?? '')
     }
   },
   { immediate: true },
@@ -52,7 +61,9 @@ watch(
 // When the provider changes, default to its first model.
 watch(provider, (name) => {
   const current = providers.value.find((p) => p.name === name)
-  model.value = current?.models[0] ?? ''
+  const models = current?.models ?? []
+  const defModel = settings.defaultModel && models.includes(settings.defaultModel)
+  model.value = defModel ? settings.defaultModel : (models[0] ?? '')
 })
 
 function onSend(content: string) {

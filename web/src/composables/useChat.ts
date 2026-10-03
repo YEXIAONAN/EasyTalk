@@ -2,6 +2,9 @@ import { computed, ref } from 'vue'
 import type { ChatMessage, Conversation } from '../types'
 import { sendChat, friendlyChatError } from '../services/chat'
 import * as db from '../services/db'
+import { useSettings } from './useSettings'
+
+const { settings } = useSettings()
 
 const conversations = ref<Conversation[]>([])
 const activeId = ref<string | null>(null)
@@ -72,6 +75,7 @@ function clear() {
 }
 
 async function persist(conv: Conversation) {
+  if (!settings.saveHistory) return
   conv.updatedAt = Date.now()
   // Structured clone can't serialize Vue reactive proxies, so store a plain copy.
   const plain = JSON.parse(JSON.stringify(conv)) as Conversation
@@ -112,7 +116,15 @@ async function send(provider: string, model: string, content: string) {
 
   try {
     await sendChat(
-      { provider, model, messages: apiMessages, stream: true },
+      {
+        provider,
+        model,
+        messages: apiMessages,
+        stream: settings.streamResponse,
+        temperature: settings.temperature ?? undefined,
+        max_tokens: settings.maxTokens ?? undefined,
+        top_p: settings.topP ?? undefined,
+      },
       {
         signal: controller.signal,
         onDelta: (delta) => {

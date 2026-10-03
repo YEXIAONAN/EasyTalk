@@ -27,6 +27,24 @@
   background: var(--bg);
 }
 
+[data-theme='dark'] {
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-soft: rgba(59, 130, 246, 0.16);
+
+  --bg: #111827;
+  --bg-sidebar: #0f172a;
+  --bg-hover: #1f2937;
+  --bg-input: #1f2937;
+
+  --border: #2b3444;
+  --border-strong: #374151;
+
+  --text: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+}
+
 * {
   box-sizing: border-box;
 }
