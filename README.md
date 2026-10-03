@@ -4,17 +4,18 @@
 
 > EasyTalk is a simple and lightweight self-hosted AI chat client.
 
-EasyTalk 不是 AI 平台，也不是模型管理工具。它的目标只有一个：**让你用自己的 API，在一个简洁舒服的网页里和不同模型对话**。
+EasyTalk 不是平台，也不是模型管理工具。它的目标只有一个：**让你用自己的 API，在简洁舒服的网页里和不同模型对话。**
 
 ## Features
 
-- Provider 配置管理：Base URL / API Key / Models 的添加、编辑、删除、连接测试
-- 兼容任意 OpenAI 兼容接口（`POST /chat/completions`）
-- 流式与非流式对话，支持中途停止生成
+- 支持任意 OpenAI 兼容服务（`POST /chat/completions`）
+- 流式 / 非流式对话，支持中途停止生成
 - Markdown 渲染：标题、列表、表格、引用、行内代码、代码块（语法高亮 + 一键复制）
-- 会话历史保存在浏览器本地（IndexedDB），支持新建、切换、重命名、删除、清空
+- 左侧 Current Session 实时面板：Provider / Model / Status、Token Usage、Request 指标
+- Token Usage 归一化（产物统一 `input_tokens`/`output_tokens`/`total_tokens`/`cached_tokens`，未知显示 `—`）
 - 浅色 / 暗色 / 跟随系统 三种主题
-- 默认 Provider / Model、Temperature / Max Tokens / Top P 等本地设置
+- Temperature / Max Tokens / Top P 高级参数
+- 运行时重载配置（Reload Config）
 - 局域网访问，手机 / 平板可通过 LAN 打开
 - 响应式布局，移动端侧边栏抽屉
 - 单文件部署：前端资源通过 `go:embed` 编译进一个可执行文件
@@ -22,36 +23,14 @@ EasyTalk 不是 AI 平台，也不是模型管理工具。它的目标只有一�
 ## Quick Start
 
 ```bash
-./easytalk
+cp .env.example .env
+cp config.example.json config.json
 ```
 
-启动后终端会显示本地和局域网地址：
-
-```text
-EasyTalk v0.1.0
-
-Local:
-http://127.0.0.1:8080
-
-LAN:
-http://192.168.1.10:8080
-
-Config:
-./config.json
-```
-
-首次运行会自动在同目录生成 `config.json`。打开网页，在 Settings → Providers 中添加你的 Provider 即可开始对话。
-
-## Configuration
-
-配置文件示例见 [`config.example.json`](config.example.json)。核心结构如下：
+编辑 `config.json`，填入你自己的 Provider（Base URL 与 API Key）：
 
 ```json
 {
-  "server": {
-    "host": "0.0.0.0",
-    "port": 8080
-  },
   "providers": [
     {
       "name": "DeepSeek",
@@ -63,14 +42,47 @@ Config:
 }
 ```
 
-- `server.host` / `server.port`：监听地址与端口，默认 `0.0.0.0:8080` 便于局域网访问
-- `providers`：Provider 列表，API Key 以 `0600` 权限保存，日志与接口响应中仅显示掩码（`****xxxx`）
+然后启动：
 
-> 也可以用 `./easytalk -config /path/to/config.json` 指定配置文件位置。
+```bash
+./easytalk
+```
+
+打开浏览器访问：
+
+```text
+http://localhost:8080
+```
+
+## Configuration
+
+EasyTalk 使用两个职责分离的配置文件：
+
+### `.env` —— 如何启动
+
+保存运行环境参数，示例见 [`.env.example`](.env.example)：
+
+```text
+EASYTALK_HOST=0.0.0.0
+EASYTALK_PORT=8080
+EASYTALK_CONFIG=./config.json
+```
+
+配置优先级：命令行参数 > 环境变量 > `.env` > 默认值。
+
+### `config.json` —— 可以调用哪些 Provider
+
+保存 Provider 列表，示例见 [`config.example.json`](config.example.json)。
+
+> 两个真实文件（`.env` 与 `config.json`）均已加入 `.gitignore`，绝不要把真实 API Key 提交到 Git。
+
+如果启动时 `config.json` 不存在，EasyTalk 会输出清晰提示并安全退出，不会 panic。
+
+修改 `config.json` 后，无需重启：在 Settings → Configuration 点击 **Reload Config** 即可刷新 Provider 与 Model。
 
 ## Providers
 
-只要实现了 OpenAI 兼容接口的服务都可以使用，例如：
+任何实现了 OpenAI 兼容接口的服务都可以使用，例如：
 
 | Provider | Base URL |
 | --- | --- |
@@ -78,7 +90,13 @@ Config:
 | OpenRouter | `https://openrouter.ai/api/v1` |
 | 本地 Ollama | `http://127.0.0.1:11434/v1` |
 
-API Key 仅保存在你的设备上，浏览器请求始终经过 EasyTalk 后端转发，不会在前端代码中暴露。
+**API Key 永远只保存在后端。** 浏览器只拿到 Provider 名称与模型列表，请求始终经 EasyTalk 后端转发，Key 不会出现在 HTML / JavaScript / LocalStorage / 网络响应中。
+
+## Chat Session
+
+聊天不持久化。当前会话只保存在内存中，**刷新页面即清空**——这是设计行为，不是 Bug。
+
+`Clear Session` 会清空当前消息与用量统计，不产生任何历史记录。
 
 ## Development
 
@@ -109,26 +127,30 @@ go build -o easytalk ./cmd/easytalk       # 将前端资源嵌入单个二进制
 
 ## LAN Usage
 
-EasyTalk 默认监听 `0.0.0.0`，同一局域网内的设备（手机、平板、其他电脑）可直接通过 `http://<主机局域网 IP>:8080` 访问。启动时终端会打印本机局域网 IP。
+EasyTalk 默认监听 `0.0.0.0`，同一局域网内的设备可通过 `http://<主机局域网 IP>:8080` 访问。启动时终端会打印本机局域网 IP。
 
 ## Project Structure
 
 ```text
 EasyTalk/
-├── cmd/easytalk/main.go        # 入口：加载配置、启动服务、打印启动信息
+├── cmd/easytalk/main.go        # 入口：加载 .env/config、启动服务、优雅退出
 ├── internal/
-│   ├── config/                 # 配置加载与保存
-│   ├── server/                 # HTTP 路由、静态资源、Provider、Chat 处理器
-│   ├── provider/               # OpenAI 兼容客户端（Test / Chat / Stream）
+│   ├── config/                 # .env 与 config.json 加载
+│   ├── server/                 # HTTP 路由、Provider / Config / Chat 处理器
+│   ├── provider/               # OpenAI 兼容客户端（Chat / Stream / Usage 归一化）
 │   └── version/                # 版本号（可用 ldflags 覆盖）
 ├── web/                        # Vue 3 + Vite + TypeScript 前端
+│   ├── public/                 # favicon.svg、logo-512.png、apple-touch-icon.png
 │   └── src/
+│       ├── assets/branding/    # Logo SVG
 │       ├── components/         # 组件
 │       ├── views/              # 页面（Chat / Settings / About）
 │       ├── composables/        # 状态逻辑（providers / chat / settings）
-│       ├── services/           # API、IndexedDB、Markdown 渲染
+│       ├── services/           # API、Markdown 渲染
+│       ├── config/             # 品牌资源统一引用
 │       └── types/              # 类型定义
 ├── embed.go                    # go:embed 嵌入 web/dist
+├── .env.example
 ├── config.example.json
 ├── Makefile
 └── README.md
