@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,11 +17,11 @@ func TestChatNonStream(t *testing.T) {
 			t.Fatalf("Authorization = %q", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"id":"cmpl-1","choices":[{"message":{"role":"assistant","content":"hi"}}]}`))
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"role":"assistant","content":"hi"}}],"usage":{"prompt_tokens":10,"completion_tokens":20,"total_tokens":30,"prompt_tokens_details":{"cached_tokens":5}}}`))
 	}))
 	defer srv.Close()
 
-	content, err := Chat(context.Background(), srv.URL, "sk-test", ChatRequest{
+	content, usage, err := Chat(context.Background(), srv.URL, "sk-test", ChatRequest{
 		Model:    "m",
 		Messages: []Message{{Role: "user", Content: "hello"}},
 	})
@@ -31,6 +30,12 @@ func TestChatNonStream(t *testing.T) {
 	}
 	if content != "hi" {
 		t.Fatalf("content = %q, want %q", content, "hi")
+	}
+	if usage == nil || usage.InputTokens != 10 || usage.OutputTokens != 20 || usage.TotalTokens != 30 {
+		t.Fatalf("unexpected usage: %+v", usage)
+	}
+	if usage.CachedTokens == nil || *usage.CachedTokens != 5 {
+		t.Fatalf("unexpected cached tokens: %+v", usage)
 	}
 }
 
@@ -41,7 +46,7 @@ func TestChatInvalidKey(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := Chat(context.Background(), srv.URL, "sk-test", ChatRequest{
+	_, _, err := Chat(context.Background(), srv.URL, "sk-test", ChatRequest{
 		Model:    "m",
 		Messages: []Message{{Role: "user", Content: "hi"}},
 	})
@@ -57,10 +62,15 @@ func TestChatInvalidKey(t *testing.T) {
 	}
 }
 
-func TestStream(t *testing.T) {
+func TestStreamAndParseSSE(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"hel\"}}]}\n\n"))
+		_, _ = w.Write([]byte(
+			"data: {\"choices\":[{\"delta\":{\"content\":\"hel\"}}]}\n\n" +
+				"data: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n\n" +
+				"data: {\"choices\":[],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":2}}\n\n" +
+				"data: [DONE]\n\n",
+		))
 	}))
 	defer srv.Close()
 
@@ -73,11 +83,20 @@ func TestStream(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read: %v", err)
+	var deltas []string
+	var usage *Usage
+	ParseSSE(resp.Body, func(delta string, u *Usage) {
+		if u != nil {
+			usage = u
+		} else {
+			deltas = append(deltas, delta)
+		}
+	})
+
+	if strings.Join(deltas, "") != "hello" {
+		t.Fatalf("deltas = %v, want [hel lo]", deltas)
 	}
-	if !strings.Contains(string(body), `"delta"`) {
-		t.Fatalf("unexpected body %q", string(body))
+	if usage == nil || usage.InputTokens != 1 || usage.OutputTokens != 2 {
+		t.Fatalf("unexpected usage: %+v", usage)
 	}
 }

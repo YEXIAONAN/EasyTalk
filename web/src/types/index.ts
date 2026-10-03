@@ -3,6 +3,13 @@ export interface Provider {
   models: string[]
 }
 
+export interface Usage {
+  input_tokens: number
+  output_tokens: number
+  total_tokens: number
+  cached_tokens?: number
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'

@@ -1,4 +1,5 @@
 import { ApiError } from './api'
+import type { Usage } from '../types'
 
 export interface ChatParams {
   provider: string
@@ -13,11 +14,12 @@ export interface ChatParams {
 interface ChatOptions {
   signal?: AbortSignal
   onDelta?: (delta: string) => void
+  onUsage?: (usage: Usage) => void
 }
 
-// sendChat proxies a chat request through the EasyTalk backend. For streaming
-// requests it parses OpenAI-compatible SSE and invokes onDelta for each content
-// chunk; for non-streaming requests onDelta receives the full reply once.
+// sendChat proxies a chat request through the EasyTalk backend. The backend
+// normalizes OpenAI-compatible SSE into events carrying a `delta` (content
+// chunk) or a `usage` object.
 export async function sendChat(params: ChatParams, opts: ChatOptions = {}): Promise<void> {
   const res = await fetch('/api/chat', {
     method: 'POST',
@@ -40,6 +42,7 @@ export async function sendChat(params: ChatParams, opts: ChatOptions = {}): Prom
   if (!params.stream) {
     const data = await res.json()
     opts.onDelta?.(data.content ?? '')
+    if (data.usage) opts.onUsage?.(data.usage)
     return
   }
 
@@ -66,8 +69,11 @@ export async function sendChat(params: ChatParams, opts: ChatOptions = {}): Prom
 
       try {
         const json = JSON.parse(payload)
-        const delta = json.choices?.[0]?.delta?.content
-        if (typeof delta === 'string' && delta) opts.onDelta?.(delta)
+        if (json.usage) {
+          opts.onUsage?.(json.usage)
+        } else if (typeof json.delta === 'string' && json.delta) {
+          opts.onDelta?.(json.delta)
+        }
       } catch {
         /* ignore malformed chunk */
       }

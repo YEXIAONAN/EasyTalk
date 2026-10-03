@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"easytalk/internal/provider"
@@ -16,6 +17,13 @@ type chatRequest struct {
 	Temperature *float64           `json:"temperature"`
 	MaxTokens   *int               `json:"max_tokens"`
 	TopP        *float64           `json:"top_p"`
+}
+
+// chatResponse is the non-streaming response body.
+type chatResponse struct {
+	Role    string         `json:"role"`
+	Content string         `json:"content"`
+	Usage   *provider.Usage `json:"usage,omitempty"`
 }
 
 func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
@@ -45,24 +53,21 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := provider.Chat(r.Context(), p.BaseURL, p.APIKey, chatReq)
+	content, usage, err := provider.Chat(r.Context(), p.BaseURL, p.APIKey, chatReq)
 	if err != nil {
 		s.writeChatError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{
-		"role":    "assistant",
-		"content": content,
-	})
+	writeJSON(w, http.StatusOK, chatResponse{Role: "assistant", Content: content, Usage: usage})
 }
 
 func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, baseURL, apiKey string, req provider.ChatRequest) {
-	upstream, err := provider.Stream(r.Context(), baseURL, apiKey, req)
+	resp, err := provider.Stream(r.Context(), baseURL, apiKey, req)
 	if err != nil {
 		s.writeChatError(w, err)
 		return
 	}
-	defer upstream.Body.Close()
+	defer resp.Body.Close()
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -70,28 +75,24 @@ func (s *Server) streamChat(w http.ResponseWriter, r *http.Request, baseURL, api
 	w.WriteHeader(http.StatusOK)
 
 	flusher, _ := w.(http.Flusher)
-	buf := make([]byte, 4096)
 
-	for {
-		// Abort forwarding as soon as the client disconnects.
-		select {
-		case <-r.Context().Done():
-			return
-		default:
+	writeEvent := func(delta string, usage *provider.Usage) {
+		var b []byte
+		if usage != nil {
+			b, _ = json.Marshal(map[string]any{"usage": usage})
+		} else {
+			b, _ = json.Marshal(map[string]string{"delta": delta})
 		}
+		_, _ = fmt.Fprintf(w, "data: %s\n\n", b)
+		if flusher != nil {
+			flusher.Flush()
+		}
+	}
 
-		n, readErr := upstream.Body.Read(buf)
-		if n > 0 {
-			if _, err := w.Write(buf[:n]); err != nil {
-				return
-			}
-			if flusher != nil {
-				flusher.Flush()
-			}
-		}
-		if readErr != nil {
-			return
-		}
+	provider.ParseSSE(resp.Body, writeEvent)
+	_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+	if flusher != nil {
+		flusher.Flush()
 	}
 }
 

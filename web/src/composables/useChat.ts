@@ -37,6 +37,12 @@ async function send(provider: string, model: string, content: string) {
   sending.value = true
   controller = new AbortController()
 
+  requestCount.value += 1
+  const startedAt = performance.now()
+  const streamMode = settings.streamResponse
+  let gotFirstToken = false
+  firstTokenMs.value = null
+
   messages.value.push({ id: newId(), role: 'user', content, createdAt: Date.now() })
   messages.value.push({ id: newId(), role: 'assistant', content: '', createdAt: Date.now() })
 
@@ -53,7 +59,7 @@ async function send(provider: string, model: string, content: string) {
         provider,
         model,
         messages: apiMessages,
-        stream: settings.streamResponse,
+        stream: streamMode,
         temperature: settings.temperature ?? undefined,
         max_tokens: settings.maxTokens ?? undefined,
         top_p: settings.topP ?? undefined,
@@ -61,7 +67,19 @@ async function send(provider: string, model: string, content: string) {
       {
         signal: controller.signal,
         onDelta: (delta) => {
+          if (streamMode && !gotFirstToken) {
+            firstTokenMs.value = Math.round(performance.now() - startedAt)
+            gotFirstToken = true
+          }
           assistant.content += delta
+        },
+        onUsage: (usage) => {
+          inputTokens.value += usage.input_tokens
+          outputTokens.value += usage.output_tokens
+          totalTokens.value += usage.total_tokens
+          if (usage.cached_tokens !== undefined) {
+            cachedTokens.value = (cachedTokens.value ?? 0) + usage.cached_tokens
+          }
         },
       },
     )
@@ -70,6 +88,7 @@ async function send(provider: string, model: string, content: string) {
       assistant.content = friendlyChatError(provider, err)
     }
   } finally {
+    lastResponseMs.value = Math.round(performance.now() - startedAt)
     sending.value = false
     controller = null
   }

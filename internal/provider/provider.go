@@ -26,12 +26,26 @@ type Message struct {
 
 // ChatRequest is the subset of the OpenAI-compatible request that EasyTalk uses.
 type ChatRequest struct {
-	Model       string    `json:"model"`
-	Messages    []Message `json:"messages"`
-	Stream      bool      `json:"stream"`
-	Temperature *float64  `json:"temperature,omitempty"`
-	MaxTokens   *int      `json:"max_tokens,omitempty"`
-	TopP        *float64  `json:"top_p,omitempty"`
+	Model         string         `json:"model"`
+	Messages      []Message      `json:"messages"`
+	Stream        bool           `json:"stream"`
+	StreamOptions *StreamOptions `json:"stream_options,omitempty"`
+	Temperature   *float64       `json:"temperature,omitempty"`
+	MaxTokens     *int           `json:"max_tokens,omitempty"`
+	TopP          *float64       `json:"top_p,omitempty"`
+}
+
+// StreamOptions requests additional data on the streamed response.
+type StreamOptions struct {
+	IncludeUsage bool `json:"include_usage"`
+}
+
+// Usage is EasyTalk's normalized token usage.
+type Usage struct {
+	InputTokens  int  `json:"input_tokens"`
+	OutputTokens int  `json:"output_tokens"`
+	TotalTokens  int  `json:"total_tokens"`
+	CachedTokens *int `json:"cached_tokens,omitempty"`
 }
 
 // normalizeBase trims surrounding whitespace and a trailing slash from a base

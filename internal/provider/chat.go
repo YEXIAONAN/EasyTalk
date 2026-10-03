@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,35 +11,68 @@ import (
 	"strings"
 )
 
-// Chat sends a non-streaming completion request and returns the assistant reply.
-func Chat(ctx context.Context, baseURL, apiKey string, req ChatRequest) (string, error) {
+// rawUsage mirrors the standard OpenAI-compatible usage object.
+type rawUsage struct {
+	PromptTokens        int `json:"prompt_tokens"`
+	CompletionTokens    int `json:"completion_tokens"`
+	TotalTokens         int `json:"total_tokens"`
+	PromptTokensDetails struct {
+		CachedTokens *int `json:"cached_tokens"`
+	} `json:"prompt_tokens_details"`
+}
+
+func normalizeUsage(u rawUsage) Usage {
+	usage := Usage{
+		InputTokens:  u.PromptTokens,
+		OutputTokens: u.CompletionTokens,
+		TotalTokens:  u.TotalTokens,
+	}
+	if usage.TotalTokens == 0 {
+		usage.TotalTokens = u.PromptTokens + u.CompletionTokens
+	}
+	if u.PromptTokensDetails.CachedTokens != nil {
+		usage.CachedTokens = u.PromptTokensDetails.CachedTokens
+	}
+	return usage
+}
+
+// Chat sends a non-streaming completion request and returns the assistant reply
+// along with its normalized token usage (nil when the provider omitted it).
+func Chat(ctx context.Context, baseURL, apiKey string, req ChatRequest) (string, *Usage, error) {
 	httpReq, err := newChatRequest(ctx, baseURL, apiKey, req)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return "", &Error{Status: http.StatusBadGateway, Message: fmt.Sprintf("unable to connect: %v", err)}
+		return "", nil, &Error{Status: http.StatusBadGateway, Message: fmt.Sprintf("unable to connect: %v", err)}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", providerError(resp)
+		return "", nil, providerError(resp)
 	}
 
 	var out struct {
 		Choices []struct {
 			Message Message `json:"message"`
 		} `json:"choices"`
+		Usage *rawUsage `json:"usage"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", &Error{Status: http.StatusBadGateway, Message: "invalid response from provider"}
+		return "", nil, &Error{Status: http.StatusBadGateway, Message: "invalid response from provider"}
 	}
 	if len(out.Choices) == 0 {
-		return "", &Error{Status: http.StatusBadGateway, Message: "empty response from provider"}
+		return "", nil, &Error{Status: http.StatusBadGateway, Message: "empty response from provider"}
 	}
-	return out.Choices[0].Message.Content, nil
+
+	var usage *Usage
+	if out.Usage != nil {
+		u := normalizeUsage(*out.Usage)
+		usage = &u
+	}
+	return out.Choices[0].Message.Content, usage, nil
 }
 
 // Stream sends a streaming completion request and returns the upstream response
@@ -46,6 +80,7 @@ func Chat(ctx context.Context, baseURL, apiKey string, req ChatRequest) (string,
 // body.
 func Stream(ctx context.Context, baseURL, apiKey string, req ChatRequest) (*http.Response, error) {
 	req.Stream = true
+	req.StreamOptions = &StreamOptions{IncludeUsage: true}
 	httpReq, err := newChatRequest(ctx, baseURL, apiKey, req)
 	if err != nil {
 		return nil, err
@@ -60,6 +95,49 @@ func Stream(ctx context.Context, baseURL, apiKey string, req ChatRequest) (*http
 		return nil, providerError(resp)
 	}
 	return resp, nil
+}
+
+// ParseSSE reads an OpenAI-compatible SSE stream and invokes fn for each content
+// delta and, once received, the normalized usage.
+func ParseSSE(r io.Reader, fn func(delta string, usage *Usage)) {
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if payload == "" || payload == "[DONE]" {
+			continue
+		}
+
+		var evt struct {
+			Choices []struct {
+				Delta   struct{ Content string `json:"content"` } `json:"delta"`
+				Message struct{ Content string `json:"content"` } `json:"message"`
+			} `json:"choices"`
+			Usage *rawUsage `json:"usage"`
+		}
+		if err := json.Unmarshal([]byte(payload), &evt); err != nil {
+			continue
+		}
+
+		if evt.Usage != nil {
+			u := normalizeUsage(*evt.Usage)
+			fn("", &u)
+		}
+		for _, c := range evt.Choices {
+			d := c.Delta.Content
+			if d == "" {
+				d = c.Message.Content
+			}
+			if d != "" {
+				fn(d, nil)
+			}
+		}
+	}
 }
 
 func newChatRequest(ctx context.Context, baseURL, apiKey string, req ChatRequest) (*http.Request, error) {
