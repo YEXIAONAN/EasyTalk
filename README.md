@@ -16,6 +16,8 @@ EasyTalk 不是平台，也不是模型管理工具。它的目标只有一个�
 - 左侧 Current Session 实时面板：Provider / Model / Status、Token Usage、Request 指标
 - Token Usage 归一化（统一 `input_tokens` / `output_tokens` / `total_tokens` / `cached_tokens`，未知显示 `—`）
 - 浅色 / 暗色 / 跟随系统 三种主题
+- English / 简体中文 双语界面，默认 English，可在 Settings → Language 切换
+- 语言偏好保存在本地（localStorage）
 - Temperature / Max Tokens / Top P 高级参数
 - 运行时重载配置（Reload Config）
 - 局域网访问，手机 / 平板可通过 LAN 打开
@@ -119,6 +121,8 @@ EasyTalk **不保存聊天历史**。聊天只存在于当前浏览器页面内�
 
 这是 Privacy / Simplicity 的**设计选择**，不是 Bug。`Clear Session` 会清空当前消息与用量统计。
 
+> 注意：聊天数据（消息、Token 统计、请求指标）不持久化；但 **Language 与 Theme** 属于界面偏好，会保存在浏览器本地（`localStorage`），与聊天不持久化并不冲突。
+
 ## Token Usage
 
 Current Session 面板可展示：
@@ -207,7 +211,7 @@ EasyTalk/
 │   ├── config/                 # .env 与 config.json 加载
 │   ├── server/                 # HTTP 路由、Provider / Config / Chat 处理器
 │   ├── provider/               # OpenAI 兼容客户端（Chat / Stream / Usage 归一化）
-│   └── version/                # 版本号（ldflags 注入，CLI / API / About 统一）
+│   └── buildinfo/              # 版本 / Commit / 仓库信息（ldflags 注入，CLI / API / About 统一）
 ├── web/                        # Vue 3 + Vite + TypeScript 前端
 │   ├── public/                 # favicon.svg、logo-512.png、apple-touch-icon.png
 │   └── src/
@@ -216,6 +220,7 @@ EasyTalk/
 │       ├── views/              # 页面（Chat / Settings / About）
 │       ├── composables/        # 状态逻辑（providers / chat / settings）
 │       ├── services/           # API、Markdown 渲染
+│       ├── i18n/               # 多语言（en / zh-CN）
 │       ├── config/             # 品牌资源统一引用
 │       └── types/              # 类型定义
 ├── .github/workflows/          # ci.yml + release.yml
