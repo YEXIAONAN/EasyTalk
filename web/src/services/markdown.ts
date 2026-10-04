@@ -21,7 +21,7 @@ const marked = new Marked({
       return (
         `<div class="code-block">` +
         `<div class="code-header"><span class="code-lang">${escapeHtml(label)}</span>` +
-        `<button type="button" class="copy-btn">Copy</button></div>` +
+        `<button type="button" class="copy-btn">${escapeHtml(copyLabel)}</button></div>` +
         `<pre><code class="hljs">${highlighted}</code></pre></div>`
       )
     },
@@ -36,7 +36,13 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-export function renderMarkdown(content: string): string {
+// The copy button label is localized at render time. It is stored in a
+// module-level variable because the marked renderer is configured once; since
+// parsing is synchronous the override is safe.
+let copyLabel = 'Copy'
+
+export function renderMarkdown(content: string, label?: string): string {
+  if (label !== undefined) copyLabel = label
   const raw = marked.parse(content, { async: false }) as string
   return DOMPurify.sanitize(raw)
 }

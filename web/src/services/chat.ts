@@ -1,5 +1,6 @@
 import { ApiError } from './api'
 import type { Usage } from '../types'
+import { t } from '../i18n'
 
 export interface ChatParams {
   provider: string
@@ -83,8 +84,8 @@ export async function sendChat(params: ChatParams, opts: ChatOptions = {}): Prom
 
 export function friendlyChatError(provider: string, err: unknown): string {
   const status = (err as { status?: number } | null)?.status
-  if (status === 401) return 'API Key 无效，请检查 Provider 配置。'
-  if (status === 404) return `未找到 Provider「${provider}」。`
-  if (status === 429) return '请求过于频繁，请稍后再试。'
-  return `无法连接到 ${provider}，请检查 Base URL、API Key 和网络。`
+  if (status === 401) return t('error.invalidKey')
+  if (status === 404) return t('error.providerNotFound', { provider })
+  if (status === 429) return t('error.rateLimit')
+  return t('error.connectFailed', { provider })
 }

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ChatMessage } from '../types'
+import { useI18n } from '../i18n'
 import MarkdownRenderer from './MarkdownRenderer.vue'
+
+const { t, language } = useI18n()
 
 const props = defineProps<{
   message: ChatMessage
@@ -10,11 +13,12 @@ const props = defineProps<{
 }>()
 
 const label = computed(() => {
-  return props.message.role === 'user' ? 'You' : `${props.providerName} · ${props.modelName}`
+  return props.message.role === 'user' ? t('message.you') : `${props.providerName} · ${props.modelName}`
 })
 
 const time = computed(() => {
-  return new Date(props.message.createdAt).toLocaleTimeString('zh-CN', {
+  const locale = language.value === 'zh-CN' ? 'zh-CN' : 'en-US'
+  return new Date(props.message.createdAt).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
   })

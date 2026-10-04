@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from '../i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   sending: boolean
@@ -44,7 +47,7 @@ function autoResize() {
         v-model="text"
         rows="1"
         class="input"
-        placeholder="输入消息...（Shift + Enter 换行）"
+        :placeholder="t('composer.placeholder')"
         @keydown="onKeydown"
         @input="autoResize"
       ></textarea>
@@ -52,7 +55,7 @@ function autoResize() {
       <button
         v-if="!sending"
         class="send-btn"
-        title="发送"
+        :title="t('composer.send')"
         :disabled="!text.trim()"
         @click="submit"
       >
@@ -66,7 +69,7 @@ function autoResize() {
           />
         </svg>
       </button>
-      <button v-else class="send-btn stop" title="停止" @click="emit('stop')">
+      <button v-else class="send-btn stop" :title="t('composer.stop')" @click="emit('stop')">
         <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
           <rect x="3" y="3" width="10" height="10" rx="1.5" />
         </svg>

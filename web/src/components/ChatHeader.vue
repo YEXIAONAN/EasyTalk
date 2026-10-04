@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { Provider } from '../types'
+import { useI18n } from '../i18n'
+
+const { t } = useI18n()
 
 defineProps<{
   providers: Provider[]
@@ -17,7 +20,7 @@ const emit = defineEmits<{
 
 <template>
   <header class="header">
-    <button class="icon-btn menu-btn" title="菜单" @click="emit('toggleMenu')">
+    <button class="icon-btn menu-btn" :title="t('header.menu')" @click="emit('toggleMenu')">
       <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
         <path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
@@ -29,7 +32,7 @@ const emit = defineEmits<{
       :disabled="providers.length === 0"
       @change="emit('update:provider', ($event.target as HTMLSelectElement).value)"
     >
-      <option v-if="providers.length === 0" value="">未配置 Provider</option>
+      <option v-if="providers.length === 0" value="">{{ t('header.noProvider') }}</option>
       <option v-for="p in providers" :key="p.name" :value="p.name">{{ p.name }}</option>
     </select>
 
@@ -39,7 +42,7 @@ const emit = defineEmits<{
       :disabled="providers.length === 0"
       @change="emit('update:model', ($event.target as HTMLSelectElement).value)"
     >
-      <option v-if="providers.length === 0" value="">未配置 Model</option>
+      <option v-if="providers.length === 0" value="">{{ t('header.noModel') }}</option>
       <template v-else>
         <option
           v-for="m in providers.find((p) => p.name === provider)?.models ?? []"
@@ -53,7 +56,7 @@ const emit = defineEmits<{
 
     <div class="spacer"></div>
 
-    <button class="icon-btn" title="Settings" @click="emit('settings')">
+    <button class="icon-btn" :title="t('nav.settings')" @click="emit('settings')">
       <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
         <circle cx="8" cy="8" r="2.4" stroke="currentColor" stroke-width="1.4" />
         <path

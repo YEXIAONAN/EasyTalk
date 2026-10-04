@@ -2,21 +2,24 @@
 import { ref } from 'vue'
 import { useProviders } from '../composables/useProviders'
 import { useSettings } from '../composables/useSettings'
+import { useI18n } from '../i18n'
+import type { Language } from '../i18n'
 import * as api from '../services/api'
 
 const { fetchProviders } = useProviders()
 const { settings } = useSettings()
+const { t, language, setLanguage } = useI18n()
 
-const reloadState = ref('')
+const reloadState = ref<'settings.reloading' | 'settings.reloaded' | 'settings.reloadFailed' | ''>('')
 
 async function onReload() {
-  reloadState.value = '加载中…'
+  reloadState.value = 'settings.reloading'
   try {
     await api.reloadConfig()
     await fetchProviders()
-    reloadState.value = '已重新加载'
+    reloadState.value = 'settings.reloaded'
   } catch {
-    reloadState.value = '重载失败'
+    reloadState.value = 'settings.reloadFailed'
   }
 }
 
@@ -24,41 +27,76 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
   const value = (e.target as HTMLInputElement).value
   settings[key] = value === '' ? null : Number(value)
 }
+
+function onLanguage(e: Event) {
+  setLanguage((e.target as HTMLInputElement).value as Language)
+}
 </script>
 
 <template>
   <div class="settings">
-    <h1>Settings</h1>
+    <h1>{{ t('settings.title') }}</h1>
 
     <!-- Chat -->
     <section class="section">
-      <div class="section-head"><h2>Chat</h2></div>
+      <div class="section-head"><h2>{{ t('settings.chat') }}</h2></div>
       <div class="fields">
         <label class="row">
           <input v-model="settings.streamResponse" type="checkbox" />
-          <span>流式输出（Stream Response）</span>
+          <span>{{ t('settings.streamResponse') }}</span>
         </label>
       </div>
     </section>
 
     <!-- Appearance -->
     <section class="section">
-      <div class="section-head"><h2>Appearance</h2></div>
+      <div class="section-head"><h2>{{ t('settings.appearance') }}</h2></div>
       <div class="fields">
         <div class="field">
-          <label>Theme</label>
+          <label>{{ t('settings.theme') }}</label>
           <div class="theme-options">
             <label class="row">
               <input v-model="settings.theme" type="radio" value="light" />
-              <span>Light</span>
+              <span>{{ t('settings.light') }}</span>
             </label>
             <label class="row">
               <input v-model="settings.theme" type="radio" value="dark" />
-              <span>Dark</span>
+              <span>{{ t('settings.dark') }}</span>
             </label>
             <label class="row">
               <input v-model="settings.theme" type="radio" value="system" />
-              <span>System</span>
+              <span>{{ t('settings.system') }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Language -->
+    <section class="section">
+      <div class="section-head"><h2>{{ t('settings.language') }}</h2></div>
+      <div class="fields">
+        <div class="field">
+          <div class="theme-options">
+            <label class="row">
+              <input
+                type="radio"
+                name="language"
+                value="en"
+                :checked="language === 'en'"
+                @change="onLanguage"
+              />
+              <span>{{ t('settings.english') }}</span>
+            </label>
+            <label class="row">
+              <input
+                type="radio"
+                name="language"
+                value="zh-CN"
+                :checked="language === 'zh-CN'"
+                @change="onLanguage"
+              />
+              <span>{{ t('settings.chinese') }}</span>
             </label>
           </div>
         </div>
@@ -67,7 +105,7 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
 
     <!-- Advanced -->
     <section class="section">
-      <div class="section-head"><h2>Advanced</h2></div>
+      <div class="section-head"><h2>{{ t('settings.advanced') }}</h2></div>
       <div class="fields">
         <div class="field">
           <label>Temperature</label>
@@ -77,7 +115,7 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
             min="0"
             max="2"
             :value="settings.temperature ?? ''"
-            placeholder="默认"
+            :placeholder="t('settings.default')"
             @input="onNumber($event, 'temperature')"
           />
         </div>
@@ -88,7 +126,7 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
             step="1"
             min="1"
             :value="settings.maxTokens ?? ''"
-            placeholder="默认"
+            :placeholder="t('settings.default')"
             @input="onNumber($event, 'maxTokens')"
           />
         </div>
@@ -100,7 +138,7 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
             min="0"
             max="1"
             :value="settings.topP ?? ''"
-            placeholder="默认"
+            :placeholder="t('settings.default')"
             @input="onNumber($event, 'topP')"
           />
         </div>
@@ -109,13 +147,13 @@ function onNumber(e: Event, key: 'temperature' | 'maxTokens' | 'topP') {
 
     <!-- Configuration -->
     <section class="section">
-      <div class="section-head"><h2>Configuration</h2></div>
+      <div class="section-head"><h2>{{ t('settings.configuration') }}</h2></div>
       <div class="fields">
         <div class="field">
-          <p class="hint">修改 config.json 后点击重新加载，刷新 Provider 和 Model 列表。</p>
+          <p class="hint">{{ t('settings.reloadHint') }}</p>
           <div class="reload-row">
-            <button class="btn primary" @click="onReload">Reload Config</button>
-            <span v-if="reloadState" class="reload-state">{{ reloadState }}</span>
+            <button class="btn primary" @click="onReload">{{ t('settings.reload') }}</button>
+            <span v-if="reloadState" class="reload-state">{{ t(reloadState) }}</span>
           </div>
         </div>
       </div>

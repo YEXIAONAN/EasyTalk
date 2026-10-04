@@ -2,9 +2,12 @@
 import { nextTick, ref, watch } from 'vue'
 import type { ChatMessage, Provider } from '../types'
 import { BRANDING } from '../config/branding'
+import { useI18n } from '../i18n'
 import ChatHeader from './ChatHeader.vue'
 import MessageItem from './MessageItem.vue'
 import Composer from './Composer.vue'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   providers: Provider[]
@@ -51,8 +54,8 @@ watch(
     <div ref="listEl" class="messages">
       <div v-if="messages.length === 0" class="empty">
         <img class="empty-mark" :src="BRANDING.logoMark" alt="EasyTalk" />
-        <h2>开始新的对话</h2>
-        <p>选择一个 Provider 和 Model，在下方输入内容开始对话。</p>
+        <h2>{{ t('chat.emptyTitle') }}</h2>
+        <p>{{ t('chat.emptyDesc') }}</p>
       </div>
 
       <div v-else class="list">

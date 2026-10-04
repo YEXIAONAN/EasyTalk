@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { BRANDING } from '../config/branding'
+import { useI18n } from '../i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   active: string
@@ -50,58 +53,58 @@ function fmtTokens(n: number | null): string {
     <div class="scroll">
       <!-- Current session -->
       <div class="panel">
-        <div class="panel-title">Current Session</div>
+        <div class="panel-title">{{ t('sidebar.currentSession') }}</div>
         <div class="stat">
-          <span class="stat-label">Provider</span>
+          <span class="stat-label">{{ t('sidebar.provider') }}</span>
           <span class="stat-value">{{ provider || '—' }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Model</span>
+          <span class="stat-label">{{ t('sidebar.model') }}</span>
           <span class="stat-value">{{ model || '—' }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Status</span>
+          <span class="stat-label">{{ t('sidebar.status') }}</span>
           <span class="stat-value status" :class="{ connected }">
             <i class="dot"></i>
-            {{ connected ? 'Connected' : 'Idle' }}
+            {{ connected ? t('sidebar.connected') : t('sidebar.idle') }}
           </span>
         </div>
       </div>
 
       <!-- Token usage -->
       <div class="panel">
-        <div class="panel-title">Token Usage</div>
+        <div class="panel-title">{{ t('sidebar.tokenUsage') }}</div>
         <div class="stat">
-          <span class="stat-label">Input</span>
+          <span class="stat-label">{{ t('sidebar.input') }}</span>
           <span class="stat-value">{{ fmt(inputTokens) }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Output</span>
+          <span class="stat-label">{{ t('sidebar.output') }}</span>
           <span class="stat-value">{{ fmt(outputTokens) }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Cached</span>
+          <span class="stat-label">{{ t('sidebar.cached') }}</span>
           <span class="stat-value">{{ fmtTokens(cachedTokens) }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Total</span>
+          <span class="stat-label">{{ t('sidebar.total') }}</span>
           <span class="stat-value">{{ fmt(totalTokens) }}</span>
         </div>
       </div>
 
       <!-- Request -->
       <div class="panel">
-        <div class="panel-title">Request</div>
+        <div class="panel-title">{{ t('sidebar.request') }}</div>
         <div class="stat">
-          <span class="stat-label">Requests</span>
+          <span class="stat-label">{{ t('sidebar.requests') }}</span>
           <span class="stat-value">{{ requestCount }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Last Response</span>
+          <span class="stat-label">{{ t('sidebar.lastResponse') }}</span>
           <span class="stat-value">{{ fmtDuration(lastResponseMs) }}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">First Token</span>
+          <span class="stat-label">{{ t('sidebar.firstToken') }}</span>
           <span class="stat-value">{{ fmtDuration(firstTokenMs) }}</span>
         </div>
       </div>
@@ -118,7 +121,7 @@ function fmtTokens(n: number | null): string {
             stroke-linejoin="round"
           />
         </svg>
-        <span>Clear Session</span>
+        <span>{{ t('nav.clearSession') }}</span>
       </button>
       <button
         class="nav-item"
@@ -134,7 +137,7 @@ function fmtTokens(n: number | null): string {
             stroke-linecap="round"
           />
         </svg>
-        <span>Settings</span>
+        <span>{{ t('nav.settings') }}</span>
       </button>
       <button
         class="nav-item"
@@ -145,7 +148,7 @@ function fmtTokens(n: number | null): string {
           <circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.4" />
           <path d="M8 7.2v4M8 5v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
         </svg>
-        <span>About</span>
+        <span>{{ t('nav.about') }}</span>
       </button>
     </nav>
   </aside>

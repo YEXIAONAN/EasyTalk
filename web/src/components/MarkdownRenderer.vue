@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { renderMarkdown } from '../services/markdown'
+import { useI18n } from '../i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ content: string }>()
 
-const html = computed(() => renderMarkdown(props.content))
+const html = computed(() => renderMarkdown(props.content, t('code.copy')))
 
 async function onClick(e: MouseEvent) {
   const btn = (e.target as HTMLElement).closest('.copy-btn') as HTMLElement | null
@@ -13,9 +16,9 @@ async function onClick(e: MouseEvent) {
   const code = btn.closest('.code-block')?.querySelector('pre code')?.textContent ?? ''
   await copyText(code)
 
-  btn.textContent = 'Copied'
+  btn.textContent = t('code.copied')
   setTimeout(() => {
-    btn.textContent = 'Copy'
+    btn.textContent = t('code.copy')
   }, 1200)
 }
 
