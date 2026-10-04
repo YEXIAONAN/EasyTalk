@@ -27,13 +27,15 @@ const time = computed(() => {
 
 <template>
   <div class="message" :class="message.role">
-    <div class="meta">
-      <span class="role">{{ label }}</span>
-      <span class="time">{{ time }}</span>
-    </div>
+    <div class="bubble">
+      <div class="meta">
+        <span class="role">{{ label }}</span>
+        <span class="time">{{ time }}</span>
+      </div>
 
-    <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
-    <div v-else class="content">{{ message.content }}</div>
+      <MarkdownRenderer v-if="message.role === 'assistant'" :content="message.content" />
+      <div v-else class="content">{{ message.content }}</div>
+    </div>
   </div>
 </template>
 
@@ -41,31 +43,73 @@ const time = computed(() => {
 .message {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 0;
+  padding: 8px 0;
+}
+
+.message.assistant {
+  align-items: flex-start;
+}
+
+.message.user {
+  align-items: flex-end;
+}
+
+.bubble {
+  max-width: 76%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.message.assistant .bubble {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-top-left-radius: 4px;
+  color: var(--text);
+}
+
+.message.user .bubble {
+  background: var(--primary);
+  color: #fff;
+  border-top-right-radius: 4px;
 }
 
 .meta {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11.5px;
 }
 
 .role {
-  font-size: 12.5px;
   font-weight: 600;
-  color: var(--text);
 }
 
-.time {
-  font-size: 11.5px;
+.message.assistant .role {
+  color: var(--text-secondary);
+}
+
+.message.assistant .time {
   color: var(--text-muted);
 }
 
+.message.user .role {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message.user .time {
+  color: rgba(255, 255, 255, 0.65);
+}
+
 .content {
-  font-size: 14px;
-  line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Markdown inside the assistant bubble should inherit the bubble text color. */
+.message.assistant :deep(.markdown) {
+  color: var(--text);
 }
 </style>
