@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"easytalk/internal/buildinfo"
 	"easytalk/internal/config"
-	"easytalk/internal/version"
 )
 
 // Server wires up the HTTP routes and serves the frontend assets.
@@ -40,6 +40,7 @@ func (s *Server) Handler() http.Handler {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
+	s.mux.HandleFunc("GET /api/info", s.handleInfo)
 
 	s.mux.HandleFunc("GET /api/providers", s.handleListProviders)
 	s.mux.HandleFunc("POST /api/config/reload", s.handleReloadConfig)
@@ -55,8 +56,18 @@ func (s *Server) routes() {
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":  "ok",
-		"version": version.Version,
+		"version": buildinfo.Version,
 		"time":    time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+// handleInfo exposes build and repository metadata for the About page.
+func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"name":       buildinfo.Name,
+		"version":    buildinfo.Version,
+		"commit":     buildinfo.Commit,
+		"repository": buildinfo.Repository,
 	})
 }
 

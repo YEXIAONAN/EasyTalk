@@ -35,6 +35,17 @@ export function listProviders(): Promise<Provider[]> {
   return request<Provider[]>('/providers')
 }
 
+export interface Info {
+  name: string
+  version: string
+  commit: string
+  repository: string
+}
+
+export function getInfo(): Promise<Info> {
+  return request<Info>('/info')
+}
+
 export function reloadConfig(): Promise<{ success: boolean }> {
   return request<{ success: boolean }>('/config/reload', { method: 'POST' })
 }

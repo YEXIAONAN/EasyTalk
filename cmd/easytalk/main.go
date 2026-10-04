@@ -10,9 +10,9 @@ import (
 	"os"
 
 	"easytalk"
+	"easytalk/internal/buildinfo"
 	"easytalk/internal/config"
 	"easytalk/internal/server"
-	"easytalk/internal/version"
 )
 
 func main() {
@@ -46,7 +46,7 @@ func main() {
 }
 
 func printStartup(port int, configPath string) {
-	fmt.Printf("EasyTalk %s\n\n", version.Version)
+	fmt.Printf("EasyTalk %s\n\n", buildinfo.Version)
 	fmt.Printf("Local:\nhttp://127.0.0.1:%d\n\n", port)
 	if ip := lanIP(); ip != "" {
 		fmt.Printf("LAN:\nhttp://%s:%d\n\n", ip, port)
@@ -55,7 +55,7 @@ func printStartup(port int, configPath string) {
 }
 
 func printMissingConfig(path string) {
-	fmt.Printf("EasyTalk %s\n\n", version.Version)
+	fmt.Printf("EasyTalk %s\n\n", buildinfo.Version)
 	fmt.Printf("Config file not found:\n%s\n\n", path)
 	fmt.Printf("Please copy:\nconfig.example.json\n\n")
 	fmt.Printf("to:\nconfig.json\n\n")

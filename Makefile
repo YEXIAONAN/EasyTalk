@@ -8,7 +8,7 @@ build-web:
 	cd web && npm ci && npm run build
 
 build-go:
-	go build -ldflags "-X easytalk/internal/version.Version=$(VERSION)" -o easytalk ./cmd/easytalk
+	go build -ldflags "-X easytalk/internal/buildinfo.Version=$(VERSION)" -o easytalk ./cmd/easytalk
 
 dev:
 	go run ./cmd/easytalk

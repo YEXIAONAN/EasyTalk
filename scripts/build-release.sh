@@ -42,7 +42,7 @@ RELEASE_DIR="release"
 rm -rf "$RELEASE_DIR"
 mkdir -p "$RELEASE_DIR"
 
-LDFLAGS="-s -w -X easytalk/internal/version.Version=${VERSION}"
+LDFLAGS="-s -w -X easytalk/internal/buildinfo.Version=${VERSION} -X easytalk/internal/buildinfo.Commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 package() {
   local goos="$1" goarch="$2" ext="${3:-}"
