@@ -26,15 +26,16 @@ EasyTalk 不是平台，也不是模型管理工具。它的目标只有一个�
 
 ## Quick Start
 
-### 方式一：下载 Release（推荐）
+请按你的使用方式二选一：
 
-1. 前往 [Releases](https://github.com/YEXIAONAN/EasyTalk/releases) 下载对应平台的压缩包。
-2. 解压后进入目录，首次运行会自动从示例生成配置：
+### A. 从 GitHub Release 下载（推荐给普通用户）
+
+1. 前往 [Releases](https://github.com/YEXIAONAN/EasyTalk/releases) 下载对应平台的压缩包并解压。
+2. 首次运行先复制一份配置示例：
 
    ```bash
    cp config.example.json config.json       # macOS / Linux
-   # 或 Windows（PowerShell）：
-   #   Copy-Item config.example.json config.json
+   # Windows（PowerShell）：Copy-Item config.example.json config.json
    ```
 
 3. 编辑 `config.json`，填入你自己的 Provider（Base URL 与 API Key）。
@@ -45,17 +46,23 @@ EasyTalk 不是平台，也不是模型管理工具。它的目标只有一个�
    # Windows：双击或运行 easytalk.exe
    ```
 
-5. 浏览器访问 `http://localhost:8080`。
+5. 浏览器访问 `http://localhost:8080`。启动时终端会打印本机局域网 IP，手机 / 平板可通过该地址访问。
 
-也可以直接使用仓库内的**一键启动脚本**（会自动复制配置并拉起服务）：
+### B. 从源码运行（克隆 / 下载仓库）
+
+先构建一次（需要 Go 与 Node.js）：
+
+```bash
+make build
+```
+
+之后直接使用仓库 `start/` 目录下的一键启动脚本（会自动复制配置并拉起服务、显示本机 IP 与端口）：
 
 - Windows：双击 `start/start.bat`
 - macOS：双击 `start/start.command`
-- Linux：`./start/start.sh`
+- Linux / macOS 终端：`./start/start.sh`
 
-### 方式二：从源码构建
-
-见下方 [Development](#development) 与 [Build](#build)。最终 Release 用户**不需要**安装 Go / Node.js / npm。
+> macOS 首次双击 `.command` 若被系统拦截，请右键 → 打开，或先执行 `xattr -d com.apple.quarantine start/start.command`。
 
 ## Provider Configuration
 

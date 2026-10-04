@@ -56,6 +56,10 @@ package() {
 
   cp config.example.json .env.example README.md "$staging/"
 
+  # 一键启动脚本（Windows / macOS / Linux）
+  mkdir -p "$staging/start"
+  cp start/start.sh start/start.command start/start.bat "$staging/start/"
+
   if [ "$goos" = "windows" ]; then
     (cd "$staging" && zip -q -r "../$archive.zip" .)
   else
